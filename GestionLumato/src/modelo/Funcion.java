@@ -1,0 +1,14 @@
+package modelo;
+
+public enum Funcion {
+    REGISTRAR_VENTA,
+    ABRIR_CAJA,
+    CERRAR_CAJA,
+    CARGAR_PRODUCTO,
+    MODIFICAR_PRECIO,
+    AJUSTE_STOCK,
+    VER_ESTADISTICAS,
+    VER_GANANCIAS,
+    GESTION_EMPLEADOS,
+    PAGAR_SUELDOS
+}
