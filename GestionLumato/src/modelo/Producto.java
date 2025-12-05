@@ -47,6 +47,10 @@ public class Producto {
     public int getCantidadStock() { return cantidadStock; }
     public Categoria getCategoria() { return categoria; }
     
+ // En modelo/Producto.java
     @Override
-    public String toString() { return descripcion; }
+    public String toString() {
+        // Esto es lo que se verá en la lista desplegable
+        return descripcion + " - $" + calcularPrecioFinal();
+    }
 }

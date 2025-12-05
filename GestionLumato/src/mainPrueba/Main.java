@@ -10,10 +10,14 @@ public class Main {
 
         // ... carga de productos ...
         Categoria almacen = new Categoria(1, "Almacén");
-        Producto arroz = new Producto("A-01", "779123456", almacen, "Arroz Gallo", 
+        Producto arroz = new Producto("A-01", "77912", almacen, "Arroz Gallo", 
                 new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
         arroz.agregarStock(100);
         miNegocio.agregarProducto(arroz);
+        Producto coca = new Producto("A-02", "779", almacen, "Manaos Cola 2,25L", 
+                new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
+        coca.agregarStock(100);
+        miNegocio.agregarProducto(coca);
 
         // GUARDAMOS EL USUARIO EN UNA VARIABLE PARA USARLO ABAJO
         Usuario admin = new Gerente("admin", "123", "Mateo Gerente");

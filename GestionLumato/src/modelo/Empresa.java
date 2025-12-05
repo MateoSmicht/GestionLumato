@@ -35,6 +35,18 @@ public class Empresa {
     public Producto buscarProducto(String codigo) {
         return this.stock.get(codigo);
     }
+    
+    
+    public List<Producto> buscarProductosPorNombre(String nombreBusqueda) {
+        List<Producto> resultados = new java.util.ArrayList<>();  
+        String busqueda = nombreBusqueda.toLowerCase().trim();
+        for (Producto p : this.stock.values()) {    
+            if (p.getDescripcion().toLowerCase().contains(busqueda)) {
+                resultados.add(p);
+            }
+        }      
+        return resultados;
+    }
 
     public void registrarVenta(Venta venta) {
         this.historialVentas.add(venta);

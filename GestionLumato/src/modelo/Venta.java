@@ -12,7 +12,7 @@ public class Venta {
     private Usuario vendedor;
     private List<DetalleVenta> items;
     private BigDecimal total;
-
+    //Facturacion
     public Venta(Usuario vendedor) {
         this.id = contadorId++;
         this.fechaHora = LocalDateTime.now();
@@ -31,7 +31,16 @@ public class Venta {
             System.out.println("Error: Stock insuficiente");
         }
     }
-
+    public void eliminarItem(DetalleVenta detalle) {
+        if (this.items.contains(detalle)) {
+            this.total = this.total.subtract(detalle.calcularSubtotal());
+            detalle.getProducto().agregarStock(detalle.getCantidad());
+            this.items.remove(detalle);
+        }
+    }
+    public void agregarCantidadAlProducto(DetalleVenta detalle) {
+    	
+    }
     public long getId() { return id; }
     public BigDecimal getTotal() { return total; }
     public Usuario getVendedor() { return vendedor; }
