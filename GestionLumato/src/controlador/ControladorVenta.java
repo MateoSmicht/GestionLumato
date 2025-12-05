@@ -24,31 +24,30 @@ public class ControladorVenta {
         return ventaActual;
     }
 
-    /**
-     * Intenta agregar un producto parseando el texto (ej: "3*779...")
-     * Retorna el mensaje de éxito o lanza excepción con el error.
-     */
     public String agregarPorInput(String entrada) throws Exception {
         if (entrada.isEmpty()) return "";
-
-        String codigoBuscado = entrada;
+        String codigo = entrada;
         int cantidad = 1;
 
-        // Lógica de parsing
         if (entrada.contains("*")) {
             String[] partes = entrada.split("\\*");
             cantidad = Integer.parseInt(partes[0]);
-            codigoBuscado = partes[1];
+            codigo = partes[1];
         }
 
-        Producto p = empresa.buscarProducto(codigoBuscado);
+        Producto p = empresa.buscarProducto(codigo);
+        if (p == null) throw new Exception("Producto no encontrado: " + codigo);
 
-        if (p != null) {
-            ventaActual.agregarItem(p, cantidad);
-            return "Agregado: " + cantidad + " x " + p.getDescripcion();
-        } else {
-            throw new Exception("Producto no encontrado: " + codigoBuscado);
+        // --- VALIDACIÓN DE STOCK (LECTURA) ---
+        // Verificamos si alcanza, pero NO descontamos todavía.
+        // Nota: Para ser perfecto, deberíamos sumar la cantidad que ya pusimos en el carrito
+        // pero para este nivel, validar contra el stock actual está bien.
+        if (p.getCantidadStock() < cantidad) {
+            throw new Exception("Stock insuficiente. Hay: " + p.getCantidadStock());
         }
+
+        ventaActual.agregarItem(p, cantidad);
+        return "OK";
     }
 
     public void eliminarItem(int indice) {
@@ -58,24 +57,58 @@ public class ControladorVenta {
         }
     }
 
-    public void finalizarVenta() {
-        empresa.registrarVenta(ventaActual);
-    }
-    
-    // Método puro de lógica para el vuelto
-    public BigDecimal calcularVuelto(BigDecimal pago, BigDecimal total) {
-        if (pago.compareTo(total) < 0) {
-            throw new IllegalArgumentException("Monto insuficiente");
-        }
+ 
+
+    public BigDecimal calcularVuelto(BigDecimal pago) {
+        BigDecimal total = ventaActual.getTotal();
+        if (pago.compareTo(total) < 0) throw new IllegalArgumentException("Insuficiente");
         return pago.subtract(total);
     }
-    
-    // Delegamos la búsqueda a la empresa
+
     public List<Producto> buscarPorNombre(String nombre) {
         return empresa.buscarProductosPorNombre(nombre);
     }
-    
+
     public Producto buscarPorCodigo(String codigo) {
         return empresa.buscarProducto(codigo);
     }
+    
+    public void finalizarVenta() {
+        // 1. Descontar Stock
+        for (DetalleVenta detalle : ventaActual.getItems()) {
+            detalle.getProducto().descontarStock(detalle.getCantidad());
+        }
+        // 2. Registrar
+        empresa.registrarVenta(ventaActual);
+        
+        // 3. Borrar el pendiente de ESTE vendedor (si había)
+        empresa.borrarVentaPendiente(vendedor);
+    }
+
+    public void guardarVentaEnEspera() {
+        if (!ventaActual.getItems().isEmpty()) {
+            // Guardamos usando al vendedor como clave
+            empresa.setVentaPendiente(vendedor, ventaActual);
+        }
+    }
+
+    public boolean existeVentaPendiente() {
+        // Preguntamos por ESTE vendedor
+        return empresa.hayVentaPendiente(vendedor);
+    }
+
+    public void restaurarVentaPendiente() {
+        // Recuperamos la de ESTE vendedor
+        Venta recuperada = empresa.getVentaPendiente(vendedor);
+        if (recuperada != null) {
+            this.ventaActual = recuperada;
+        }
+    }
+
+    public void descartarVentaPendiente() {
+        // Borramos la de ESTE vendedor
+        empresa.borrarVentaPendiente(vendedor);
+        nuevaVenta();
+    }
+
 }

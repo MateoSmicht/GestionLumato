@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.util.List;
+
 import controlador.ControladorVenta;
 import modelo.Empresa;
 import modelo.Usuario;
@@ -27,46 +28,68 @@ public class PanelVenta extends JPanel {
     private JTable tableDetalle;
     private DefaultTableModel modeloTabla;
     private JLabel lblTotalPagar;
+    public JButton btnVolver;
 
     /**
      * Constructor
      */
     public PanelVenta(Empresa empresa, Usuario vendedor) {
-        // Inicializamos el controlador con los datos del sistema
+        // Inicializamos el controlador
         this.controlador = new ControladorVenta(empresa, vendedor);
 
         setLayout(null);
         setBounds(0, 0, 784, 500);
-
+        
+        btnVolver = new JButton("Volver al Menú");
+        btnVolver.setFont(new Font("Tahoma", Font.BOLD, 12));
+        btnVolver.setBounds(650, 10, 130, 30); // Ajustá la posición X/Y donde te guste
+        add(btnVolver);
+        
+        
         // ---------------------------------------------------------
-        // 1. ZONA SUPERIOR (Buscador y Botones F)
+        // 1. ZONA SUPERIOR (Buscador y Botones)
         // ---------------------------------------------------------
         JLabel lblBuscar = new JLabel("INGRESE CÓDIGO:");
         lblBuscar.setFont(new Font("Tahoma", Font.BOLD, 14));
-        lblBuscar.setBounds(20, 30, 150, 25);
+        lblBuscar.setBounds(20, 27, 150, 25);
         add(lblBuscar);
 
         txtBusquedaProducto = new JTextField();
-        txtBusquedaProducto.setBounds(160, 20, 280, 40);
+        txtBusquedaProducto.setBounds(160, 20, 420, 40);
         txtBusquedaProducto.setFont(new Font("Tahoma", Font.PLAIN, 14));
         add(txtBusquedaProducto);
 
-        // Enter en el buscador
+        // Al presionar Enter, procesamos el producto
         txtBusquedaProducto.addActionListener(e -> agregarProductoPorInput());
 
-        // Botón F5 (Buscar Nombre)
-        JButton btnBuscar = crearteBotonAccion("<html><center>Buscar<br>Nombre (F5)</center></html>", 460, 20, new Color(0, 0, 128));
+        // --- BOTÓN F5 (BUSCAR NOMBRE) ---
+        JButton btnBuscar = new JButton("<html><center>Buscar<br>Nombre (F5)</center></html>");
+        btnBuscar.setBounds(13, 89, 100, 50);
+        btnBuscar.setForeground(new Color(0, 0, 128)); // Azul
+        btnBuscar.setFont(new Font("Tahoma", Font.BOLD, 10));
         btnBuscar.addActionListener(e -> abrirBusquedaPorNombre());
         add(btnBuscar);
 
-        // Botón F6 (Consulta Precio)
-        JButton btnPrecio = crearteBotonAccion("<html><center>Consultar<br>Precio (F6)</center></html>", 570, 20, new Color(255, 140, 0));
+        // --- BOTÓN F6 (CONSULTAR PRECIO) ---
+        JButton btnPrecio = new JButton("<html><center>Consultar<br>Precio (F6)</center></html>");
+        btnPrecio.setBounds(13, 141, 100, 50);
+        btnPrecio.setForeground(new Color(255, 140, 0)); // Naranja
+        btnPrecio.setFont(new Font("Tahoma", Font.BOLD, 10));
         btnPrecio.addActionListener(e -> abrirConsultaPrecio());
         add(btnPrecio);
+        
+        // --- BOTÓN F7 (ELIMINAR ÍTEM) ---
+        JButton btnEliminar = new JButton("<html><center>Eliminar<br>Item (F7)</center></html>");
+        btnEliminar.setBounds(13, 193, 100, 50);
+        btnEliminar.setForeground(Color.RED);
+        btnEliminar.setFont(new Font("Tahoma", Font.BOLD, 10));
+        btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
+        add(btnEliminar);
 
         // ---------------------------------------------------------
-        // 2. ZONA CENTRAL (Tabla y Eliminar)
+        // 2. ZONA CENTRAL (Tabla)
         // ---------------------------------------------------------
+        
         String[] columnas = { "Cód.", "Descripción", "Precio Unit.", "Cant.", "Subtotal" };
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
@@ -78,13 +101,8 @@ public class PanelVenta extends JPanel {
         tableDetalle.setRowHeight(25);
         
         JScrollPane scrollPane = new JScrollPane(tableDetalle);
-        scrollPane.setBounds(20, 80, 640, 320);
+        scrollPane.setBounds(123, 89, 640, 320);
         add(scrollPane);
-
-        // Botón F7 (Eliminar)
-        JButton btnEliminar = crearteBotonAccion("<html><center>Eliminar<br>Item (F7)</center></html>", 670, 80, Color.RED);
-        btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
-        add(btnEliminar);
 
         // ---------------------------------------------------------
         // 3. ZONA INFERIOR (Totales y Cobrar)
@@ -101,10 +119,10 @@ public class PanelVenta extends JPanel {
         add(lblTotalPagar);
 
         JButton btnCobrar = new JButton("COBRAR (F12)");
-        btnCobrar.setBackground(new Color(50, 205, 50));
+        btnCobrar.setBackground(SystemColor.activeCaption); 
         btnCobrar.setForeground(Color.WHITE);
         btnCobrar.setFont(new Font("Tahoma", Font.BOLD, 16));
-        btnCobrar.setBounds(20, 420, 200, 50);
+        btnCobrar.setBounds(26, 412, 166, 50);
         btnCobrar.addActionListener(e -> iniciarProcesoCobro());
         add(btnCobrar);
 
@@ -115,23 +133,52 @@ public class PanelVenta extends JPanel {
         setupAtajo(KeyEvent.VK_F6, "F6", e -> abrirConsultaPrecio());
         setupAtajo(KeyEvent.VK_F7, "F7", e -> eliminarProductoSeleccionado());
         setupAtajo(KeyEvent.VK_F12, "F12", e -> iniciarProcesoCobro());
+        
+        // Poner foco en el buscador al iniciar
+        txtBusquedaProducto.requestFocus();
+        
+        verificarSesionPendiente(); // <--- Llamada al método nuevo
+        actualizarTabla();
+
     }
 
-    // --- MÉTODOS VISUALES Y DELEGACIÓN ---
+    // ========================================================================
+    // MÉTODOS VISUALES Y DELEGACIÓN
+    // ========================================================================
 
     private void agregarProductoPorInput() {
         try {
             String entrada = txtBusquedaProducto.getText().trim();
-            // Delegamos al controlador
+            // Delegamos al controlador para que agregue el producto
             String mensaje = controlador.agregarPorInput(entrada);
             
+            // Refrescamos la tabla visual
             actualizarTabla();
-            txtBusquedaProducto.setText("");
-            System.out.println(mensaje); // Log consola
+            
+            // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+            // Buscamos cuál fue el último producto agregado para mostrar su nombre
+            List<DetalleVenta> items = controlador.getVentaActual().getItems();
+            
+            if (!items.isEmpty()) {
+                // Obtenemos el último de la lista
+                DetalleVenta ultimo = items.get(items.size() - 1);
+                String nombreProducto = ultimo.getProducto().getDescripcion();
+                
+                // Ponemos el nombre en la barra
+                txtBusquedaProducto.setText(nombreProducto);
+                
+                // Y lo SELECCIONAMOS TODO para que al escribir se borre solo
+                txtBusquedaProducto.selectAll();
+            } else {
+                txtBusquedaProducto.setText("");
+            }
+            
+            System.out.println(mensaje); 
+            
         } catch (Exception e) {
             java.awt.Toolkit.getDefaultToolkit().beep();
             JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            txtBusquedaProducto.selectAll();
+            txtBusquedaProducto.selectAll(); 
         }
     }
 
@@ -152,10 +199,14 @@ public class PanelVenta extends JPanel {
 
         if (seleccionado != null) {
             try {
-                // Truco: Simulamos que escribió el código exacto
                 controlador.agregarPorInput(seleccionado.getCodigoBarra());
                 actualizarTabla();
+                
+                // Mismo truco: mostrar nombre seleccionado
+                txtBusquedaProducto.setText(seleccionado.getDescripcion());
+                txtBusquedaProducto.selectAll();
                 txtBusquedaProducto.requestFocus();
+                
             } catch (Exception e) { e.printStackTrace(); }
         }
     }
@@ -188,6 +239,7 @@ public class PanelVenta extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             controlador.eliminarItem(fila);
             actualizarTabla();
+            txtBusquedaProducto.setText(""); // Limpiamos la barra por las dudas
             txtBusquedaProducto.requestFocus();
         }
     }
@@ -199,7 +251,7 @@ public class PanelVenta extends JPanel {
             return;
         }
 
-        String[] opciones = {"Efectivo", "Débito", "Crédito", "Transferencia"};
+        String[] opciones = {"Efectivo", "Débito", "Crédito", "Transferencia/QR"};
         int seleccion = JOptionPane.showOptionDialog(this, "Medio de Pago:", "Total: $" + v.getTotal(),
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
 
@@ -209,15 +261,16 @@ public class PanelVenta extends JPanel {
         if (seleccion == 0) { // Efectivo
             pagado = procesarPagoEfectivo();
         } else {
-            pagado = true; // Tarjetas asumimos OK
+            pagado = true; // Tarjetas
         }
 
         if (pagado) {
             controlador.finalizarVenta();
             JOptionPane.showMessageDialog(this, "Venta Exitosa!");
             
-            controlador.nuevaVenta(); // Reseteamos
+            controlador.nuevaVenta(); 
             actualizarTabla();
+            txtBusquedaProducto.setText("");
             txtBusquedaProducto.requestFocus();
         }
     }
@@ -228,7 +281,7 @@ public class PanelVenta extends JPanel {
             if (input == null) return false;
             try {
                 BigDecimal pago = new BigDecimal(input);
-                BigDecimal vuelto = controlador.calcularVuelto(pago,controlador.getVentaActual().getTotal());
+                BigDecimal vuelto = controlador.calcularVuelto(pago);
                 JOptionPane.showMessageDialog(this, "<html><h1>Vuelto: <span style='color:blue'>$ " + vuelto + "</span></h1></html>");
                 return true;
             } catch (IllegalArgumentException e) {
@@ -253,16 +306,35 @@ public class PanelVenta extends JPanel {
         }
         lblTotalPagar.setText("$ " + v.getTotal());
     }
-
-    // --- UTILIDADES ---
-    private JButton crearteBotonAccion(String texto, int x, int y, Color color) {
-        JButton btn = new JButton(texto);
-        btn.setBounds(x, y, 100, 50);
-        btn.setForeground(color);
-        btn.setFont(new Font("Tahoma", Font.BOLD, 10));
-        return btn;
+    
+ // Lógica para preguntar al iniciar
+    private void verificarSesionPendiente() {
+        if (controlador.existeVentaPendiente()) {
+            int respuesta = JOptionPane.showConfirmDialog(this, 
+                    "Hay una venta sin finalizar guardada.\n¿Desea recuperarla?", 
+                    "Venta Pendiente", 
+                    JOptionPane.YES_NO_OPTION, 
+                    JOptionPane.QUESTION_MESSAGE);
+            
+            if (respuesta == JOptionPane.YES_OPTION) {
+                controlador.restaurarVentaPendiente();
+                // Actualizamos visuales
+                actualizarTabla();
+                txtBusquedaProducto.setText("");
+                txtBusquedaProducto.requestFocus();
+            } else {
+                // Si dice que NO, la borramos para siempre
+                controlador.descartarVentaPendiente();
+            }
+        }
     }
 
+    // Método público para que MainForm lo llame al apretar "Volver"
+    public void guardarSalida() {
+        controlador.guardarVentaEnEspera();
+    }
+
+    // --- UTILIDADES ---
     private void setupAtajo(int keyEvent, String nombre, ActionListener accion) {
         KeyStroke keyStroke = KeyStroke.getKeyStroke(keyEvent, 0);
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, nombre);

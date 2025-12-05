@@ -52,7 +52,7 @@ public class MainForm extends JFrame {
         panelCabecera.setLayout(null);
         contentPane.add(panelCabecera);
         
-        JLabel lblInfoUser = new JLabel("Usuario: " + usuario.getNombreCompleto() + " [" + usuario.getNombreRol() + "]");
+        JLabel lblInfoUser = new JLabel("Operador:" + usuario.getNombreCompleto());
         lblInfoUser.setFont(new Font("Tahoma", Font.BOLD, 14));
         lblInfoUser.setBounds(20, 11, 400, 38);
         panelCabecera.add(lblInfoUser);
@@ -63,7 +63,7 @@ public class MainForm extends JFrame {
                 cerrarSesion();
             }
         });
-        btnLogout.setBounds(640, 15, 120, 30);
+        btnLogout.setBounds(662, 21, 97, 23);
         panelCabecera.add(btnLogout);
         
         // =============================================================
@@ -137,25 +137,27 @@ public class MainForm extends JFrame {
     /**
      * Carga el PanelVenta dentro del cuerpo
      */
+ // En interfaz/MainForm.java -> método abrirPanelVenta()
+
     private void abrirPanelVenta() {
-        // 1. Limpiamos los botones
         panelCuerpo.removeAll();
         
-        // 2. Instanciamos tu clase PanelVenta
         PanelVenta panelVenta = new PanelVenta(empresa, usuarioLogueado);
-        panelVenta.setBounds(0, 0, 784, 500); // Ocupa todo el cuerpo
+        panelVenta.setBounds(0, 0, 784, 501);
         
-        // 3. Agregamos un botón "Volver al Menú" dentro del panelVenta (Truco visual)
-        // Esto es un parche rápido para que puedas volver sin programar lógica compleja en PanelVenta
-        JButton btnVolver = new JButton("Volver al Menú");
-        btnVolver.setBounds(630, 10, 120, 20);
-        btnVolver.addActionListener(e -> mostrarMenu());
-        panelVenta.add(btnVolver); 
+        // --- LÓGICA DEL BOTÓN VOLVER ---
+        panelVenta.btnVolver.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                
+                // 1. Guardamos el borrador antes de irnos
+                panelVenta.guardarSalida(); 
+                
+                // 2. Volvemos al menú
+                mostrarMenu(); 
+            }
+        });
         
-        // 4. Lo agregamos al contenedor
         panelCuerpo.add(panelVenta);
-        
-        // 5. Refrescamos
         panelCuerpo.revalidate();
         panelCuerpo.repaint();
     }

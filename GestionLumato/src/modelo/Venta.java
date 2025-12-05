@@ -21,20 +21,15 @@ public class Venta {
         this.total = BigDecimal.ZERO;
     }
 
-    public void agregarItem(Producto producto, int cantidad) {
-        if (producto.getCantidadStock() >= cantidad) {
-            producto.descontarStock(cantidad);
-            DetalleVenta detalle = new DetalleVenta(producto, cantidad);
-            this.items.add(detalle);
-            this.total = this.total.add(detalle.calcularSubtotal());
-        } else {
-            System.out.println("Error: Stock insuficiente");
-        }
+    public void agregarItem(Producto producto, int cantidad) {  
+        DetalleVenta detalle = new DetalleVenta(producto, cantidad);
+        this.items.add(detalle);
+        this.total = this.total.add(detalle.calcularSubtotal());
     }
+    
     public void eliminarItem(DetalleVenta detalle) {
         if (this.items.contains(detalle)) {
             this.total = this.total.subtract(detalle.calcularSubtotal());
-            detalle.getProducto().agregarStock(detalle.getCantidad());
             this.items.remove(detalle);
         }
     }

@@ -10,12 +10,14 @@ public class Empresa {
     private Map<String, Producto> stock;    // Clave: Código de Barra
     private Map<String, Usuario> usuarios;  // Clave: Username
     private List<Venta> historialVentas; 
+    private Map<String, Venta> ventasPendientes;
 
     public Empresa(String nombre) {
         this.nombre = nombre;
         this.stock = new HashMap<>();
         this.usuarios = new HashMap<>();
         this.historialVentas = new ArrayList<>();
+        this.ventasPendientes = new HashMap<>();
     }
 
     public void agregarUsuario(Usuario u) {
@@ -51,6 +53,27 @@ public class Empresa {
     public void registrarVenta(Venta venta) {
         this.historialVentas.add(venta);
     }
+    
+    public void setVentaPendiente(Usuario u, Venta v) {
+        // Guardamos la venta en el casillero de ESTE usuario
+        this.ventasPendientes.put(u.getUsername(), v);
+    }
+
+    public Venta getVentaPendiente(Usuario u) {
+        // Recuperamos solo la de ESTE usuario
+        return this.ventasPendientes.get(u.getUsername());
+    }
+    
+    public void borrarVentaPendiente(Usuario u) {
+        this.ventasPendientes.remove(u.getUsername());
+    }
+
+    public boolean hayVentaPendiente(Usuario u) {
+        // Verificamos si existe y si tiene ítems
+        Venta v = this.ventasPendientes.get(u.getUsername());
+        return v != null && !v.getItems().isEmpty();
+    }
+
 
     public List<Venta> getHistorialVentas() { return historialVentas; }
     public String getNombre() { return nombre; }

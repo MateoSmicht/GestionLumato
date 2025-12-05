@@ -6,7 +6,7 @@ import interfaz.MainForm; // <--- Importamos el Menú Principal directo
 
 public class Main {
     public static void main(String[] args) {
-        Empresa miNegocio = new Empresa("Supermercado Java");
+        Empresa miNegocio = new Empresa("Gestion Lumato V");
 
         // ... carga de productos ...
         Categoria almacen = new Categoria(1, "Almacén");
@@ -20,7 +20,7 @@ public class Main {
         miNegocio.agregarProducto(coca);
 
         // GUARDAMOS EL USUARIO EN UNA VARIABLE PARA USARLO ABAJO
-        Usuario admin = new Gerente("admin", "123", "Mateo Gerente");
+        Usuario admin = new Gerente("admin", "123", "Mateo Smicht");
         miNegocio.agregarUsuario(admin);
         
         miNegocio.agregarUsuario(new Cajero("pepe", "0000", "Pepe Cajero"));
