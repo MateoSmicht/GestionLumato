@@ -22,7 +22,7 @@ public class Main {
         
      // PRODUCTO: Pasta Dental (La caja trae 12)
         Producto colgate = new Producto(
-                "COL-12", "779123", perfumeria, 
+                "COL-12", "7798049448084", perfumeria, 
                 "Colgate Total 12", 
                 "CAJA", // Nombre de la unidad mayor
                 12,     // Factor

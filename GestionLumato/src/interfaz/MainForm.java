@@ -48,7 +48,7 @@ public class MainForm extends JFrame {
         // =============================================================
         panelCabecera = new JPanel();
         panelCabecera.setBackground(new Color(230, 230, 250)); // Color Lavanda suave
-        panelCabecera.setBounds(0, 0, 784, 60);
+        panelCabecera.setBounds(0, 0, 784, 50);
         panelCabecera.setLayout(null);
         contentPane.add(panelCabecera);
         
@@ -70,7 +70,7 @@ public class MainForm extends JFrame {
         // 2. CUERPO (Donde ocurre la magia)
         // =============================================================
         panelCuerpo = new JPanel();
-        panelCuerpo.setBounds(0, 60, 784, 501);
+        panelCuerpo.setBounds(0, 50, 784, 511);
         panelCuerpo.setLayout(null); // Layout absoluto para WindowBuilder
         contentPane.add(panelCuerpo);
         

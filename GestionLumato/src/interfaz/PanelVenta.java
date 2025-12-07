@@ -1,7 +1,10 @@
 package interfaz;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,421 +21,454 @@ import modelo.DetalleVenta;
 
 public class PanelVenta extends JPanel {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    // --- EL CEREBRO ---
-    private ControladorVenta controlador;
+	// --- EL CEREBRO ---
+	private ControladorVenta controlador;
 
-    // --- ESTADO ---
-    private boolean modoBulto = false; // Por defecto carga unidades
+	// --- ESTADO ---
+	private boolean modoBulto = false;
 
-    // --- COMPONENTES VISUALES ---
-    private JTextField txtBusquedaProducto;
-    private JTable tableDetalle;
-    private DefaultTableModel modeloTabla;
-    private JLabel lblTotalPagar;
-    private JLabel lblInfoCantidad;
-    
-    // Botones con acceso público o de clase para cambiarles propiedades
-    public JButton btnVolver;
-    private JButton btnModoBulto;
+	// --- COMPONENTES VISUALES ---
+	private JTextField txtBusquedaProducto;
+	private JTable tableDetalle;
+	private DefaultTableModel modeloTabla;
+	private JLabel lblTotalPagar;
+	private JLabel lblInfoCantidad;
 
-    /**
-     * Constructor
-     */
-    public PanelVenta(Empresa empresa, Usuario vendedor) {
-        // Inicializamos el controlador
-        this.controlador = new ControladorVenta(empresa, vendedor);
+	public JButton btnVolver;
+	private JButton btnModoBulto;
 
-        setLayout(null);
-        setBounds(0, 0, 784, 500);
+	// --- COLORES DE DISEÑO (FLAT UI) ---
+	private final Color COLOR_FONDO = new Color(245, 246, 250); // Gris muy suave
+	private final Color COLOR_HEADER = new Color(44, 62, 80); // Azul oscuro profesional
+	private final Color COLOR_ACCENT = new Color(52, 152, 219); // Azul brillante
+	private final Color COLOR_VERDE = new Color(39, 174, 96); // Verde Esmeralda
+	private final Color COLOR_ROJO = new Color(231, 76, 60); // Rojo suave
+	private final Color COLOR_NARANJA = new Color(230, 126, 34); // Naranja
 
-        // ---------------------------------------------------------
-        // 1. ZONA SUPERIOR (Buscador y Botones)
-        // ---------------------------------------------------------
-        JLabel lblBuscar = new JLabel("INGRESE CÓDIGO:");
-        lblBuscar.setFont(new Font("Tahoma", Font.BOLD, 14));
-        lblBuscar.setBounds(20, 27, 150, 25);
-        add(lblBuscar);
+	/**
+	 * Constructor
+	 */
+	public PanelVenta(Empresa empresa, Usuario vendedor) {
+		this.controlador = new ControladorVenta(empresa, vendedor);
 
-        txtBusquedaProducto = new JTextField();
-        txtBusquedaProducto.setBounds(160, 20, 420, 40);
-        txtBusquedaProducto.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        add(txtBusquedaProducto);
+		setLayout(null);
+		setBackground(COLOR_FONDO); // Fondo general
+		setBounds(0, 0, 784, 500);
 
-        // Al presionar Enter, procesamos el producto
-        txtBusquedaProducto.addActionListener(e -> agregarProductoPorInput());
+		// =========================================================
+		// 1. PANEL CABECERA (Fondo Azul Oscuro)
+		// =========================================================
+		JPanel panelHeader = new JPanel();
+		panelHeader.setLayout(null);
+		panelHeader.setBackground(COLOR_HEADER);
+		panelHeader.setBounds(0, 0, 784, 80);
+		add(panelHeader);
 
-        // Botón Volver (Arriba a la derecha)
-        btnVolver = new JButton("Volver al Menú");
-        btnVolver.setBounds(652, 26, 111, 30);
-        add(btnVolver);
-        
-     // --- NUEVO: INDICADOR DE CANTIDAD (1* / 2*) ---
-        lblInfoCantidad = new JLabel("1*"); // Arranca en 1*
-        lblInfoCantidad.setFont(new Font("Arial", Font.BOLD, 22)); // Fuente Grande
-        lblInfoCantidad.setForeground(new Color(0, 100, 0)); // Verde oscuro
-        lblInfoCantidad.setHorizontalAlignment(SwingConstants.CENTER);
-        lblInfoCantidad.setBounds(572, 20, 70, 40); // Entre la barra y el botón volver
-        add(lblInfoCantidad);
+		JLabel lblBuscar = new JLabel("CÓDIGO DE BARRAS:");
+		lblBuscar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+		lblBuscar.setForeground(Color.WHITE);
+		lblBuscar.setBounds(20, 15, 200, 20);
+		panelHeader.add(lblBuscar);
 
-        // --- BOTÓN F5 (BUSCAR NOMBRE) ---
-        JButton btnBuscar = new JButton("<html><center>Buscar<br>Nombre (F5)</center></html>");
-        btnBuscar.setBounds(13, 89, 100, 50);
-        btnBuscar.setForeground(new Color(0, 0, 128)); // Azul
-        btnBuscar.setFont(new Font("Tahoma", Font.BOLD, 10));
-        btnBuscar.addActionListener(e -> abrirBusquedaPorNombre());
-        add(btnBuscar);
+		txtBusquedaProducto = new JTextField();
+		txtBusquedaProducto.setBounds(20, 35, 450, 35);
+		txtBusquedaProducto.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		txtBusquedaProducto.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Padding interno
+		panelHeader.add(txtBusquedaProducto);
 
-        // --- BOTÓN F6 (CONSULTAR PRECIO) ---
-        JButton btnPrecio = new JButton("<html><center>Consultar<br>Precio (F6)</center></html>");
-        btnPrecio.setBounds(13, 141, 100, 50);
-        btnPrecio.setForeground(new Color(255, 140, 0)); // Naranja
-        btnPrecio.setFont(new Font("Tahoma", Font.BOLD, 10));
-        btnPrecio.addActionListener(e -> abrirConsultaPrecio());
-        add(btnPrecio);
-        
-        // --- BOTÓN F7 (MODO BULTO) ---
-        btnModoBulto = new JButton("<html><center>Modo Bulto<br>(F7)</center></html>");
-        btnModoBulto.setBounds(13, 193, 100, 50);
-        btnModoBulto.setFont(new Font("Tahoma", Font.BOLD, 10));
-        btnModoBulto.setBackground(Color.LIGHT_GRAY); // Inicia desactivado
-        btnModoBulto.addActionListener(e -> toggleModoBulto());
-        add(btnModoBulto);
-        
-        // --- BOTÓN F8 (ELIMINAR ÍTEM) ---
-        JButton btnEliminar = new JButton("<html><center>Eliminar<br>Item (F8)</center></html>");
-        btnEliminar.setBounds(13, 245, 100, 50);
-        btnEliminar.setForeground(Color.RED);
-        btnEliminar.setFont(new Font("Tahoma", Font.BOLD, 10));
-        btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
-        add(btnEliminar);
+		// Al presionar Enter
+		txtBusquedaProducto.addActionListener(e -> agregarProductoPorInput());
 
-        // ---------------------------------------------------------
-        // 2. ZONA CENTRAL (Tabla)
-        // ---------------------------------------------------------
-        
-        // Definimos las columnas incluyendo Unidad y Factor
-        String[] columnas = { "Cód.", "Descripción", "Unidad", "Factor", "Precio Unit.", "Cant.", "Subtotal" };
-        
-        modeloTabla = new DefaultTableModel(columnas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                // Solo permitimos editar la columna de Cantidad (índice 5)
-                return column == 5; 
-            }
-        };
-        
-        // Listener para editar cantidad en la tabla
-        modeloTabla.addTableModelListener(e -> {
-            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
-                int fila = e.getFirstRow();
-                int columna = e.getColumn();
-                
-                // Si cambiaron la columna Cantidad (5)
-                if (columna == 5 && fila >= 0) {
-                    try {
-                        Object valor = modeloTabla.getValueAt(fila, columna);
-                        int nuevaCant = Integer.parseInt(valor.toString());
-                        controlador.modificarCantidadItem(fila, nuevaCant);
-                        
-                        // Refrescamos y devolvemos foco al buscador
-                        SwingUtilities.invokeLater(() -> {
-                            actualizarTabla();
-                            enfocarBuscador();
-                        });
-                    } catch (Exception ex) { /* Ignorar error de parseo */ }
-                }
-            }
-        });
+		// Indicador de cantidad (1*)
+		lblInfoCantidad = new JLabel("1*");
+		lblInfoCantidad.setFont(new Font("Segoe UI", Font.BOLD, 24));
+		lblInfoCantidad.setForeground(SystemColor.activeCaption); 
+		lblInfoCantidad.setHorizontalAlignment(SwingConstants.CENTER);
+		lblInfoCantidad.setBounds(480, 35, 60, 35);
+		panelHeader.add(lblInfoCantidad);
 
-        tableDetalle = new JTable(modeloTabla);
-        tableDetalle.setFont(new Font("Tahoma", Font.PLAIN, 12));
-        tableDetalle.setRowHeight(25);
-        
-        // Ajuste de ancho de columnas (Opcional)
-        tableDetalle.getColumnModel().getColumn(0).setPreferredWidth(80);  // Cód
-        tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(200); // Descripción
-        tableDetalle.getColumnModel().getColumn(2).setPreferredWidth(50);  // Unidad
-        tableDetalle.getColumnModel().getColumn(3).setPreferredWidth(40);  // Factor
-        tableDetalle.getColumnModel().getColumn(5).setPreferredWidth(40);  // Cant
-        
-        JScrollPane scrollPane = new JScrollPane(tableDetalle);
-        scrollPane.setBounds(123, 89, 640, 320);
-        add(scrollPane);
+		// Botón Volver (Estilo Flat)
+		btnVolver = new JButton("Volver al Menú");
+		btnVolver.setBounds(632, 37, 130, 35);
+		estilizarBoton(btnVolver, new Color(149, 165, 166), Color.WHITE); // Gris
+		panelHeader.add(btnVolver);
 
-        // ---------------------------------------------------------
-        // 3. ZONA INFERIOR (Totales y Cobrar)
-        // ---------------------------------------------------------
-        JLabel lblTextoTotal = new JLabel("TOTAL A PAGAR:");
-        lblTextoTotal.setFont(new Font("Tahoma", Font.BOLD, 20));
-        lblTextoTotal.setBounds(400, 420, 180, 30);
-        add(lblTextoTotal);
+		// =========================================================
+		// 2. BARRA LATERAL DE BOTONES (Izquierda)
+		// =========================================================
 
-        lblTotalPagar = new JLabel("$ 0.00");
-        lblTotalPagar.setFont(new Font("Tahoma", Font.BOLD, 26));
-        lblTotalPagar.setForeground(new Color(0, 128, 0)); // Verde
-        lblTotalPagar.setBounds(600, 420, 180, 30);
-        add(lblTotalPagar);
+		int btnY = 100;
+		int btnGap = 60; // Espacio entre botones
 
-        JButton btnCobrar = new JButton("COBRAR (F12)");
-        btnCobrar.setBackground(new Color(50, 205, 50)); 
-        btnCobrar.setForeground(Color.WHITE);
-        btnCobrar.setFont(new Font("Tahoma", Font.BOLD, 16));
-        btnCobrar.setBounds(26, 412, 166, 50);
-        btnCobrar.addActionListener(e -> iniciarProcesoCobro());
-        add(btnCobrar);
-        
-       
-        // ---------------------------------------------------------
-        // 4. CONFIGURACIÓN DE TECLAS (KeyBindings)
-        // ---------------------------------------------------------
-        setupAtajo(KeyEvent.VK_F1, "F1", e -> enfocarBuscador());
-        setupAtajo(KeyEvent.VK_F5, "F5", e -> abrirBusquedaPorNombre());
-        setupAtajo(KeyEvent.VK_F6, "F6", e -> abrirConsultaPrecio());
-        setupAtajo(KeyEvent.VK_F7, "F7", e -> toggleModoBulto());
-        setupAtajo(KeyEvent.VK_F8, "F8", e -> eliminarProductoSeleccionado());
-        setupAtajo(KeyEvent.VK_F12, "F12", e -> iniciarProcesoCobro());
-        
-        // Foco inicial
-        enfocarBuscador();
-        
-        // Verificar sesión pendiente al final del constructor
-        // (Movemos esto al final para evitar NullPointer en modeloTabla)
-        verificarSesionPendiente();
-    }
+		// F7 - Modo Bulto
+		btnModoBulto = new JButton("<html><center>Modo Bulto(F7)<br><font size=2>Desactivado</font></center></html>");
+		btnModoBulto.setBounds(333, 83, 130, 35);
+		estilizarBoton(btnModoBulto, Color.LIGHT_GRAY, Color.BLACK); // Gris desactivado
+		btnModoBulto.addActionListener(e -> toggleModoBulto());
+		add(btnModoBulto);
 
-    // ========================================================================
-    // MÉTODOS VISUALES Y DELEGACIÓN
-    // ========================================================================
+		// =========================================================
+		// 3. TABLA CENTRAL (Estilizada)
+		// =========================================================
 
-    private void enfocarBuscador() {
-        txtBusquedaProducto.requestFocusInWindow();
-        txtBusquedaProducto.selectAll();
-    }
-    
-    private void toggleModoBulto() {
-        this.modoBulto = !this.modoBulto; // Invertir estado
-        
-        if (this.modoBulto) {
-            btnModoBulto.setBackground(Color.GREEN);
-            btnModoBulto.setText("<html><center>Modo Bulto<br>(ACTIVO)</center></html>");
-        } else {
-            btnModoBulto.setBackground(Color.LIGHT_GRAY);
-            btnModoBulto.setText("<html><center>Modo Bulto<br>(F7)</center></html>");
-        }
-        enfocarBuscador();
-    }
-    
-    
-  
-    
-    // Método auxiliar para el cartelito
-    private void actualizarIndicadorCantidad(String entrada) {
-        if (entrada.contains("*")) {
-            // Si el usuario escribió "5*779...", extraemos el "5"
-            try {
-                String cantStr = entrada.split("\\*")[0];
-                lblInfoCantidad.setText(cantStr + "*");
-                lblInfoCantidad.setForeground(Color.BLUE); // Azul para resaltar mult.
-            } catch (Exception e) {
-                lblInfoCantidad.setText("1*");
-            }
-        } else {
-            // Si fue una venta normal
-            lblInfoCantidad.setText("1*");
-            lblInfoCantidad.setForeground(new Color(0, 100, 0)); // Verde normal
-        }
-    }
+		String[] columnas = { "Cód.", "Descripción", "Unidad", "Factor", "Precio Unit.", "Cant.", "Subtotal" };
+		modeloTabla = new DefaultTableModel(columnas, 0) {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return column == 5;
+			}
+		};
 
-    
+		// Listener de edición (Lógica original)
+		modeloTabla.addTableModelListener(e -> {
+			if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+				int fila = e.getFirstRow();
+				int columna = e.getColumn();
+				if (columna == 5 && fila >= 0) {
+					try {
+						Object valor = modeloTabla.getValueAt(fila, columna);
+						int nuevaCant = Integer.parseInt(valor.toString());
+						controlador.modificarCantidadItem(fila, nuevaCant);
+						SwingUtilities.invokeLater(() -> {
+							actualizarTabla();
+							enfocarBuscador();
+						});
+					} catch (Exception ex) {
+						/* Ignorar error */ }
+				}
+			}
+		});
 
-    private void agregarProductoPorInput() {
-        try {
-            String entrada = txtBusquedaProducto.getText().trim();
-            
-            // --- CORREGIDO AQUÍ ---
-            // Le pasamos el estado del botón F7 (modoBulto)
-            String mensaje = controlador.agregarPorInput(entrada, this.modoBulto);
-            actualizarIndicadorCantidad(entrada);
-            actualizarTabla();
-            
-            // Truco visual: mostrar nombre y seleccionar
-            java.util.List<DetalleVenta> items = controlador.getVentaActual().getItems();
-            if (!items.isEmpty()) {
-                DetalleVenta ultimo = items.get(items.size() - 1);
-                txtBusquedaProducto.setText(ultimo.getProducto().getDescripcion());
-                txtBusquedaProducto.selectAll();
-            } else {
-                txtBusquedaProducto.setText("");
-            }
-            
-            System.out.println(mensaje); 
-            
-        } catch (Exception e) {
-            java.awt.Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            txtBusquedaProducto.selectAll(); 
-        }
-    }
+		tableDetalle = new JTable(modeloTabla);
 
-    private void abrirBusquedaPorNombre() {
-        String texto = JOptionPane.showInputDialog(this, "Nombre del producto:", "Buscar (F5)", JOptionPane.QUESTION_MESSAGE);
-        if (texto == null || texto.trim().isEmpty()) return;
+		// --- ESTILO VISUAL DE LA TABLA ---
+		tableDetalle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		tableDetalle.setRowHeight(30); // Filas más altas
+		tableDetalle.setShowGrid(true);
+		tableDetalle.setGridColor(new Color(230, 230, 230));
+		tableDetalle.setSelectionBackground(new Color(220, 230, 241)); // Selección suave
+		tableDetalle.setSelectionForeground(Color.BLACK);
 
-        java.util.List<Producto> resultados = controlador.buscarPorNombre(texto);
-        
-        if (resultados.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No encontrado.");
-            return;
-        }
-        
-        Object[] opciones = resultados.toArray();
-        Producto seleccionado = (Producto) JOptionPane.showInputDialog(this, "Seleccione:", "Resultados", 
-                JOptionPane.PLAIN_MESSAGE, null, opciones, opciones[0]);
+		// Header de la tabla (Azul y negrita)
+		JTableHeader header = tableDetalle.getTableHeader();
+		header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		header.setBackground(COLOR_HEADER);
+		header.setForeground(Color.WHITE);
+		header.setOpaque(true);
 
-        if (seleccionado != null) {
-            try {
-                // --- CORREGIDO AQUÍ ---
-                // Al buscar por nombre, asumimos venta por unidad (false)
-                controlador.agregarPorInput(seleccionado.getCodigoBarra(), false);
-                
-                actualizarTabla();
-                
-                txtBusquedaProducto.setText(seleccionado.getDescripcion());
-                txtBusquedaProducto.selectAll();
-                txtBusquedaProducto.requestFocus();
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-    }
+		// Alineación centrada para columnas numéricas
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+		tableDetalle.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+		tableDetalle.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+		tableDetalle.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+		tableDetalle.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
 
-    private void abrirConsultaPrecio() {
-        String codigo = JOptionPane.showInputDialog(this, "Código de Barras:", "Consultar Precio (F6)", JOptionPane.QUESTION_MESSAGE);
-        if (codigo == null || codigo.trim().isEmpty()) return;
+		// --- AJUSTE DE ANCHO DE COLUMNAS (AQUÍ ESTÁ EL CAMBIO) ---
+		tableDetalle.getColumnModel().getColumn(0).setPreferredWidth(100);
+		tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(250); // <--- Descripción ANCHA
+		tableDetalle.getColumnModel().getColumn(2).setPreferredWidth(50);
+		tableDetalle.getColumnModel().getColumn(3).setPreferredWidth(40);
+		tableDetalle.getColumnModel().getColumn(4).setPreferredWidth(80);
+		tableDetalle.getColumnModel().getColumn(5).setPreferredWidth(40);
+		tableDetalle.getColumnModel().getColumn(6).setPreferredWidth(80);
 
-        Producto p = controlador.buscarPorCodigo(codigo);
-        if (p != null) {
-            String html = "<html><center><h2>" + p.getDescripcion() + "</h2>" +
-                          "<h1 style='color:green'>$ " + p.calcularPrecioFinal() + "</h1>" +
-                          "<p>Unidad: " + p.getNombreUnidad() + " (x" + p.getFactor() + ")</p>" +
-                          "<p>Stock: " + p.getCantidadStock() + "</p></center></html>";
-            JOptionPane.showMessageDialog(this, html, "Precio", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            java.awt.Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(this, "Producto inexistente.");
-        }
-        enfocarBuscador();
-    }
+		JScrollPane scrollPane = new JScrollPane(tableDetalle);
+		scrollPane.setBounds(29, 121, 731, 279);
+		scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY)); // Borde sutil
+		add(scrollPane);
 
-    private void eliminarProductoSeleccionado() {
-        int fila = tableDetalle.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Seleccione un ítem de la tabla.");
-            return;
-        }
+		// =========================================================
+		// 4. PANEL INFERIOR (Totales y Cobrar)
+		// =========================================================
+		JPanel panelFooter = new JPanel();
+		panelFooter.setLayout(null);
+		panelFooter.setBackground(Color.WHITE); // Blanco para resaltar el dinero
+		panelFooter.setBounds(0, 420, 784, 80);
+		panelFooter.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+		add(panelFooter);
 
-        int confirm = JOptionPane.showConfirmDialog(this, "¿Borrar ítem?", "Confirmar", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            controlador.eliminarItem(fila);
-            actualizarTabla();
-            
-            txtBusquedaProducto.setText(""); 
-            enfocarBuscador();
-        }
-    }
+		JLabel lblTextoTotal = new JLabel("TOTAL A PAGAR:");
+		lblTextoTotal.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		lblTextoTotal.setForeground(Color.GRAY);
+		lblTextoTotal.setBounds(380, 20, 180, 40);
+		panelFooter.add(lblTextoTotal);
 
-    private void iniciarProcesoCobro() {
-        Venta v = controlador.getVentaActual();
-        if (v.getItems().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay productos.");
-            return;
-        }
+		lblTotalPagar = new JLabel("$ 0.00");
+		lblTotalPagar.setFont(new Font("Segoe UI", Font.BOLD, 36)); // Gigante
+		lblTotalPagar.setForeground(COLOR_VERDE);
+		lblTotalPagar.setBounds(540, 15, 230, 50);
+		panelFooter.add(lblTotalPagar);
 
-        String[] opciones = {"Efectivo", "Débito", "Crédito", "Transferencia"};
-        int seleccion = JOptionPane.showOptionDialog(this, "Medio de Pago:", "Total: $" + v.getTotal(),
-                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+		JButton btnCobrar = new JButton("COBRAR (F12)");
+		btnCobrar.setBounds(20, 15, 200, 50);
+		estilizarBoton(btnCobrar, COLOR_VERDE, Color.WHITE);
+		btnCobrar.setFont(new Font("Segoe UI", Font.BOLD, 20)); // Más grande
+		btnCobrar.addActionListener(e -> iniciarProcesoCobro());
+		panelFooter.add(btnCobrar);
 
-        if (seleccion == -1) return;
+		// F5 - Buscar
+		JButton btnBuscar = new JButton("<html><center>BUSCAR (F5)<br><font size=2>Por Nombre</font></center></html>");
+		btnBuscar.setBounds(48, 83, 139, 35);
+		add(btnBuscar);
+		estilizarBoton(btnBuscar, COLOR_ACCENT, Color.WHITE);
 
-        boolean pagado = false;
-        if (seleccion == 0) { 
-            pagado = procesarPagoEfectivo();
-        } else {
-            pagado = true; 
-        }
+		// F6 - Precio
+		JButton btnPrecio = new JButton("<html><center>PRECIO (F6)<br><font size=2>Consultar</font></center></html>");
+		btnPrecio.setBounds(197, 83, 130, 35);
+		add(btnPrecio);
+		estilizarBoton(btnPrecio, COLOR_NARANJA, Color.WHITE);
 
-        if (pagado) {
-            controlador.finalizarVenta();
-            JOptionPane.showMessageDialog(this, "Venta Exitosa!");
-            
-            controlador.nuevaVenta(); // Reseteamos
-            actualizarTabla();
-            txtBusquedaProducto.setText("");
-            enfocarBuscador();
-        }
-    }
+		// F8 - Eliminar
+		JButton btnEliminar = new JButton(
+				"<html><center>ELIMINAR (F8)<br><font size=2>Borrar Ítem</font></center></html>");
+		btnEliminar.setBounds(473, 83, 130, 35);
+		add(btnEliminar);
+		estilizarBoton(btnEliminar, COLOR_ROJO, Color.WHITE);
+		btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
+		btnPrecio.addActionListener(e -> abrirConsultaPrecio());
+		btnBuscar.addActionListener(e -> abrirBusquedaPorNombre());
 
-    private boolean procesarPagoEfectivo() {
-        while (true) {
-            String input = JOptionPane.showInputDialog(this, "Total: $" + controlador.getVentaActual().getTotal() + "\nCon cuánto paga?");
-            if (input == null) return false;
-            try {
-                BigDecimal pago = new BigDecimal(input);
-                BigDecimal vuelto = controlador.calcularVuelto(pago);
-                JOptionPane.showMessageDialog(this, "<html><h1>Vuelto: <span style='color:blue'>$ " + vuelto + "</span></h1></html>");
-                return true;
-            } catch (IllegalArgumentException e) {
-                JOptionPane.showMessageDialog(this, "Monto insuficiente.");
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Número inválido.");
-            }
-        }
-    }
+		// =========================================================
+		// 5. ATAJOS DE TECLADO
+		// =========================================================
+		setupAtajo(KeyEvent.VK_F1, "F1", e -> enfocarBuscador());
+		setupAtajo(KeyEvent.VK_F5, "F5", e -> abrirBusquedaPorNombre());
+		setupAtajo(KeyEvent.VK_F6, "F6", e -> abrirConsultaPrecio());
+		setupAtajo(KeyEvent.VK_F7, "F7", e -> toggleModoBulto());
+		setupAtajo(KeyEvent.VK_F8, "F8", e -> eliminarProductoSeleccionado());
+		setupAtajo(KeyEvent.VK_F12, "F12", e -> iniciarProcesoCobro());
 
-    private void actualizarTabla() {
-        modeloTabla.setRowCount(0);
-        Venta v = controlador.getVentaActual();
-        
-        for (DetalleVenta d : v.getItems()) {
-            modeloTabla.addRow(new Object[] {
-                d.getProducto().getCodigoBarra(),
-                d.getProducto().getDescripcion(),
-                d.getNombreUnidadSnapshot(), // Muestra "UNI" o "CAJA"
-                d.getFactorSnapshot(),       // Muestra 1 o 12
-                "$" + d.getPrecioUnitarioSnapshot(),
-                d.getCantidad(),
-                "$" + d.calcularSubtotal()
-            });
-        }
-        lblTotalPagar.setText("$ " + v.getTotal());
-    }
-    
-    // --- PERSISTENCIA DE SESIÓN ---
-    private void verificarSesionPendiente() {
-        if (controlador.existeVentaPendiente()) {
-            int resp = JOptionPane.showConfirmDialog(this, 
-                    "Tiene una venta sin finalizar.\n¿Desea recuperarla?", 
-                    "Venta Pendiente", JOptionPane.YES_NO_OPTION);
-            
-            if (resp == JOptionPane.YES_OPTION) {
-                controlador.restaurarVentaPendiente();
-                actualizarTabla();
-            } else {
-                controlador.descartarVentaPendiente();
-            }
-        }
-    }
-    
-    public void guardarSalida() {
-        controlador.guardarVentaEnEspera();
-    }
+		txtBusquedaProducto.requestFocus();
+		verificarSesionPendiente();
+	}
 
-    // --- UTILIDADES ---
-    private void setupAtajo(int keyEvent, String nombre, ActionListener accion) {
-        KeyStroke keyStroke = KeyStroke.getKeyStroke(keyEvent, 0);
-        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, nombre);
-        getActionMap().put(nombre, new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { accion.actionPerformed(e); }
-        });
-    }
+	// --- MÉTODO AUXILIAR DE DISEÑO ---
+	private void estilizarBoton(JButton btn, Color bg, Color fg) {
+		btn.setBackground(bg);
+		btn.setForeground(fg);
+		btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+		btn.setFocusPainted(false); // Quita el recuadro feo de foco
+		btn.setBorderPainted(false); // Estilo Flat
+		btn.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Manito al pasar el mouse
+	}
+
+	// ========================================================================
+	// MÉTODOS DE LÓGICA (CON CORRECCIÓN DE UNIDAD/BULTO)
+	// ========================================================================
+
+	private void enfocarBuscador() {
+		txtBusquedaProducto.requestFocusInWindow();
+		txtBusquedaProducto.selectAll();
+	}
+
+	private void toggleModoBulto() {
+		this.modoBulto = !this.modoBulto;
+
+		if (this.modoBulto) {
+			estilizarBoton(btnModoBulto, new Color(46, 204, 113), Color.WHITE); // Verde activo
+			btnModoBulto.setText("<html><center>Modo Bulto(F7)<br>ACTIVO</center></html>");
+		} else {
+			estilizarBoton(btnModoBulto, Color.LIGHT_GRAY, Color.BLACK); // Gris inactivo
+			btnModoBulto.setText("<html><center>Modo Bulto(F7)<br>Desactivado</center></html>");
+		}
+		enfocarBuscador();
+	}
+
+	private void actualizarIndicadorCantidad(String entrada) {
+		if (entrada.contains("*")) {
+			try {
+				String cantStr = entrada.split("\\*")[0];
+				lblInfoCantidad.setText(cantStr + "*");
+			} catch (Exception e) {
+				lblInfoCantidad.setText("1*");
+			}
+		} else {
+			lblInfoCantidad.setText("1*");
+		}
+	}
+
+	private void agregarProductoPorInput() {
+		try {
+			String entrada = txtBusquedaProducto.getText().trim();
+			// Lógica con modoBulto
+			String mensaje = controlador.agregarPorInput(entrada, this.modoBulto);
+			actualizarIndicadorCantidad(entrada);
+			actualizarTabla();
+
+			List<DetalleVenta> items = controlador.getVentaActual().getItems();
+			if (!items.isEmpty()) {
+				DetalleVenta ultimo = items.get(items.size() - 1);
+				txtBusquedaProducto.setText(ultimo.getProducto().getDescripcion());
+				txtBusquedaProducto.selectAll();
+			} else {
+				txtBusquedaProducto.setText("");
+			}
+			System.out.println(mensaje);
+		} catch (Exception e) {
+			java.awt.Toolkit.getDefaultToolkit().beep();
+			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			txtBusquedaProducto.selectAll();
+		}
+	}
+
+	private void abrirBusquedaPorNombre() {
+		String texto = JOptionPane.showInputDialog(this, "Nombre del producto:", "Buscar (F5)",
+				JOptionPane.QUESTION_MESSAGE);
+		if (texto == null || texto.trim().isEmpty())
+			return;
+
+		List<Producto> resultados = controlador.buscarPorNombre(texto);
+
+		if (resultados.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "No encontrado.");
+			return;
+		}
+
+		Object[] opciones = resultados.toArray();
+		Producto seleccionado = (Producto) JOptionPane.showInputDialog(this, "Seleccione:", "Resultados",
+				JOptionPane.PLAIN_MESSAGE, null, opciones, opciones[0]);
+
+		if (seleccionado != null) {
+			try {
+				controlador.agregarPorInput(seleccionado.getCodigoBarra(), false); // Forzamos unidad
+				actualizarTabla();
+				txtBusquedaProducto.setText(seleccionado.getDescripcion());
+				txtBusquedaProducto.selectAll();
+				txtBusquedaProducto.requestFocus();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void abrirConsultaPrecio() {
+		String codigo = JOptionPane.showInputDialog(this, "Código de Barras:", "Consultar Precio (F6)",
+				JOptionPane.QUESTION_MESSAGE);
+		if (codigo == null || codigo.trim().isEmpty())
+			return;
+
+		Producto p = controlador.buscarPorCodigo(codigo);
+		if (p != null) {
+			String html = "<html><center><h2>" + p.getDescripcion() + "</h2>" + "<h1 style='color:green'>$ "
+					+ p.calcularPrecioFinal() + "</h1>" + "<p>Unidad: " + p.getNombreUnidad() + " (x" + p.getFactor()
+					+ ")</p>" + "<p>Stock: " + p.getCantidadStock() + "</p></center></html>";
+			JOptionPane.showMessageDialog(this, html, "Precio", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			java.awt.Toolkit.getDefaultToolkit().beep();
+			JOptionPane.showMessageDialog(this, "Producto inexistente.");
+		}
+		enfocarBuscador();
+	}
+
+	private void eliminarProductoSeleccionado() {
+		int fila = tableDetalle.getSelectedRow();
+		if (fila == -1) {
+			JOptionPane.showMessageDialog(this, "Seleccione un ítem de la tabla.");
+			return;
+		}
+
+		int confirm = JOptionPane.showConfirmDialog(this, "¿Borrar ítem?", "Confirmar", JOptionPane.YES_NO_OPTION);
+		if (confirm == JOptionPane.YES_OPTION) {
+			controlador.eliminarItem(fila);
+			actualizarTabla();
+			txtBusquedaProducto.setText("");
+			txtBusquedaProducto.requestFocus();
+		}
+	}
+
+	private void iniciarProcesoCobro() {
+		Venta v = controlador.getVentaActual();
+		if (v.getItems().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "No hay productos.");
+			return;
+		}
+
+		String[] opciones = { "Efectivo", "Débito", "Crédito", "Transferencia" };
+		int seleccion = JOptionPane.showOptionDialog(this, "Medio de Pago:", "Total: $" + v.getTotal(),
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+
+		if (seleccion == -1)
+			return;
+
+		boolean pagado = false;
+		if (seleccion == 0)
+			pagado = procesarPagoEfectivo();
+		else
+			pagado = true;
+
+		if (pagado) {
+			controlador.finalizarVenta();
+			JOptionPane.showMessageDialog(this, "Venta Exitosa!");
+			controlador.nuevaVenta();
+			actualizarTabla();
+			lblInfoCantidad.setText("1*");
+			txtBusquedaProducto.setText("");
+			txtBusquedaProducto.requestFocus();
+		}
+	}
+
+	private boolean procesarPagoEfectivo() {
+		while (true) {
+			String input = JOptionPane.showInputDialog(this,
+					"Total: $" + controlador.getVentaActual().getTotal() + "\nCon cuánto paga?");
+			if (input == null)
+				return false;
+			try {
+				BigDecimal pago = new BigDecimal(input);
+				BigDecimal vuelto = controlador.calcularVuelto(pago);
+				JOptionPane.showMessageDialog(this,
+						"<html><h1>Vuelto: <span style='color:blue'>$ " + vuelto + "</span></h1></html>");
+				return true;
+			} catch (IllegalArgumentException e) {
+				JOptionPane.showMessageDialog(this, "Monto insuficiente.");
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(this, "Número inválido.");
+			}
+		}
+	}
+
+	// --- CORRECCIÓN CLAVE EN ACTUALIZAR TABLA ---
+	// Usamos los datos del DETALLE (d.getNombreUnidadSnapshot) y no del Producto
+	// genérico
+	private void actualizarTabla() {
+		modeloTabla.setRowCount(0);
+		Venta v = controlador.getVentaActual();
+		for (DetalleVenta d : v.getItems()) {
+			modeloTabla.addRow(new Object[] { d.getProducto().getCodigoBarra(), d.getProducto().getDescripcion(),
+					d.getNombreUnidadSnapshot(), // Muestra si fue CAJA o UNI
+					d.getFactorSnapshot(), // Muestra 12 o 1
+					"$" + d.getPrecioUnitarioSnapshot(), d.getCantidad(), "$" + d.calcularSubtotal() });
+		}
+		lblTotalPagar.setText("$ " + v.getTotal());
+	}
+
+	private void verificarSesionPendiente() {
+		if (controlador.existeVentaPendiente()) {
+			int resp = JOptionPane.showConfirmDialog(this, "Venta pendiente. ¿Recuperar?", "Aviso",
+					JOptionPane.YES_NO_OPTION);
+			if (resp == JOptionPane.YES_OPTION) {
+				controlador.restaurarVentaPendiente();
+				actualizarTabla();
+			} else {
+				controlador.descartarVentaPendiente();
+			}
+		}
+	}
+
+	public void guardarSalida() {
+		controlador.guardarVentaEnEspera();
+	}
+
+	private void setupAtajo(int keyEvent, String nombre, ActionListener accion) {
+		KeyStroke keyStroke = KeyStroke.getKeyStroke(keyEvent, 0);
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, nombre);
+		getActionMap().put(nombre, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				accion.actionPerformed(e);
+			}
+		});
+	}
 }
