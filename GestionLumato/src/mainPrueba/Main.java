@@ -10,14 +10,25 @@ public class Main {
 
         // ... carga de productos ...
         Categoria almacen = new Categoria(1, "Almacén");
-        Producto arroz = new Producto("A-01", "77912", almacen, "Arroz Gallo", 
+        Categoria perfumeria = new Categoria(2, "perfumeria");
+        Producto arroz = new Producto("A-01", "77912", almacen, "Arroz Gallo","BULTO",24, 
                 new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
-        arroz.agregarStock(100);
+        arroz.agregarStock(50,true);
         miNegocio.agregarProducto(arroz);
-        Producto coca = new Producto("A-02", "779", almacen, "Manaos Cola 2,25L", 
+        Producto coca = new Producto("A-02", "779", almacen, "Manaos Cola 2,25L", "BULTO", 6,
                 new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
-        coca.agregarStock(100);
+        coca.agregarStock(10,true);
         miNegocio.agregarProducto(coca);
+        
+     // PRODUCTO: Pasta Dental (La caja trae 12)
+        Producto colgate = new Producto(
+                "COL-12", "779123", perfumeria, 
+                "Colgate Total 12", 
+                "CAJA", // Nombre de la unidad mayor
+                12,     // Factor
+                new BigDecimal("1000"), new BigDecimal("0.3"), new BigDecimal("0.21"));
+        colgate.agregarStock(100,false);
+        miNegocio.agregarProducto(colgate);
 
         // GUARDAMOS EL USUARIO EN UNA VARIABLE PARA USARLO ABAJO
         Usuario admin = new Gerente("admin", "123", "Mateo Smicht");

@@ -21,8 +21,12 @@ public class Venta {
         this.total = BigDecimal.ZERO;
     }
 
-    public void agregarItem(Producto producto, int cantidad) {  
-        DetalleVenta detalle = new DetalleVenta(producto, cantidad);
+
+
+    public void agregarItem(Producto producto, int cantidad, boolean esBulto) {
+        // Creamos el detalle pasando el flag esBulto
+        DetalleVenta detalle = new DetalleVenta(producto, cantidad, esBulto);
+        
         this.items.add(detalle);
         this.total = this.total.add(detalle.calcularSubtotal());
     }
@@ -33,8 +37,12 @@ public class Venta {
             this.items.remove(detalle);
         }
     }
-    public void agregarCantidadAlProducto(DetalleVenta detalle) {
-    	
+ 
+    public void recalcularTotal() {
+        this.total = BigDecimal.ZERO;
+        for (DetalleVenta d : this.items) {
+            this.total = this.total.add(d.calcularSubtotal());
+        }
     }
     public long getId() { return id; }
     public BigDecimal getTotal() { return total; }

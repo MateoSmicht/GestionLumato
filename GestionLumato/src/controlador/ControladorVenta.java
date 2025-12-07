@@ -24,7 +24,7 @@ public class ControladorVenta {
         return ventaActual;
     }
 
-    public String agregarPorInput(String entrada) throws Exception {
+    public String agregarPorInput(String entrada, boolean esBulto) throws Exception {
         if (entrada.isEmpty()) return "";
         String codigo = entrada;
         int cantidad = 1;
@@ -38,16 +38,30 @@ public class ControladorVenta {
         Producto p = empresa.buscarProducto(codigo);
         if (p == null) throw new Exception("Producto no encontrado: " + codigo);
 
-        // --- VALIDACIÓN DE STOCK (LECTURA) ---
-        // Verificamos si alcanza, pero NO descontamos todavía.
-        // Nota: Para ser perfecto, deberíamos sumar la cantidad que ya pusimos en el carrito
-        // pero para este nivel, validar contra el stock actual está bien.
-        if (p.getCantidadStock() < cantidad) {
-            throw new Exception("Stock insuficiente. Hay: " + p.getCantidadStock());
+        // Validar Stock (Calculando unidades reales totales)
+        int factorReal = esBulto ? p.getFactor() : 1;
+        int demandaTotal = cantidad * factorReal;
+        
+        if (p.getCantidadStock() < demandaTotal) {
+            throw new Exception("Stock insuficiente. Disponibles: " + p.getCantidadStock() + " unidades.");
         }
 
-        ventaActual.agregarItem(p, cantidad);
+        ventaActual.agregarItem(p, cantidad, esBulto);
         return "OK";
+    }
+
+    // MÉTODO MODIFICADO: Descuenta stock usando las unidades reales
+    public void finalizarVenta() {
+        for (DetalleVenta detalle : ventaActual.getItems()) {
+            // Usamos el método nuevo que calcula (Cant * Factor)
+            int cantidadADescontar = detalle.getCantidadUnidadesReales();
+            
+            // Descontamos directo (ya validamos antes)
+            // Nota: usamos false porque ya calculamos la cantidad real nosotros
+            detalle.getProducto().descontarStock(cantidadADescontar, false); 
+        }
+        empresa.registrarVenta(ventaActual);
+        if (vendedor != null) empresa.borrarVentaPendiente(vendedor);
     }
 
     public void eliminarItem(int indice) {
@@ -57,7 +71,33 @@ public class ControladorVenta {
         }
     }
 
- 
+ // En controlador/ControladorVenta.java
+
+    public void modificarCantidadItem(int indice, int nuevaCantidad) throws Exception {
+        if (indice < 0 || indice >= ventaActual.getItems().size()) return;
+        
+        if (nuevaCantidad <= 0) {
+            throw new Exception("La cantidad debe ser mayor a 0. Use 'Eliminar' para borrar.");
+        }
+
+        DetalleVenta detalle = ventaActual.getItems().get(indice);
+        Producto p = detalle.getProducto();
+
+        // Validar Stock (Lectura)
+        if (p.getCantidadStock() < nuevaCantidad) {
+            throw new Exception("Stock insuficiente. Disponible: " + p.getCantidadStock());
+        }
+
+        // Si pasa, actualizamos
+        detalle.setCantidad(nuevaCantidad);
+        
+        BigDecimal nuevoTotal = BigDecimal.ZERO;
+        for(DetalleVenta d : ventaActual.getItems()) {
+            nuevoTotal = nuevoTotal.add(d.calcularSubtotal());
+        }
+       
+        ventaActual.recalcularTotal(); 
+    }
 
     public BigDecimal calcularVuelto(BigDecimal pago) {
         BigDecimal total = ventaActual.getTotal();
@@ -73,17 +113,7 @@ public class ControladorVenta {
         return empresa.buscarProducto(codigo);
     }
     
-    public void finalizarVenta() {
-        // 1. Descontar Stock
-        for (DetalleVenta detalle : ventaActual.getItems()) {
-            detalle.getProducto().descontarStock(detalle.getCantidad());
-        }
-        // 2. Registrar
-        empresa.registrarVenta(ventaActual);
-        
-        // 3. Borrar el pendiente de ESTE vendedor (si había)
-        empresa.borrarVentaPendiente(vendedor);
-    }
+   
 
     public void guardarVentaEnEspera() {
         if (!ventaActual.getItems().isEmpty()) {
