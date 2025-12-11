@@ -23,6 +23,23 @@ public class Empresa {
     public void agregarUsuario(Usuario u) {
         this.usuarios.put(u.getUsername(), u);
     }
+   
+    public boolean existeCodigoInterno(String codigoInterno) {
+        for (Producto p : this.stock.values()) {
+            if (p.getCodigoInterno().equalsIgnoreCase(codigoInterno)) {
+                return true; 
+            }
+        }
+        return false; 
+    }
+    
+    public boolean elProductoYaEstaCargado(String codigoBarra) {
+    	return stock.containsKey(codigoBarra);
+    }
+    
+    public int obtenerTodoElStock() {
+    	return stock.size();
+    }
 
     public Usuario login(String username, String password) {
         Usuario u = this.usuarios.get(username);
@@ -48,6 +65,14 @@ public class Empresa {
             }
         }      
         return resultados;
+    }
+    
+    public boolean validarNumero(String texto) {
+        // 1. Chequeamos si es null O si esta vacío O si NO son digitos
+        if (texto == null || texto.trim().isEmpty() || !texto.matches("\\d+")) {
+            return true;
+        }
+        return false;
     }
 
     public void registrarVenta(Venta venta) {

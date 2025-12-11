@@ -71,7 +71,6 @@ public class ControladorVenta {
         }
     }
 
- // En controlador/ControladorVenta.java
 
     public void modificarCantidadItem(int indice, int nuevaCantidad) throws Exception {
         if (indice < 0 || indice >= ventaActual.getItems().size()) return;

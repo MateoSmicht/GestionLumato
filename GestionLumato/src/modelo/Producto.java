@@ -9,13 +9,9 @@ public class Producto {
     private String codigoBarra;
     private Categoria categoria;
     private String descripcion;
-    
-    // Stock SIEMPRE en la unidad más pequeña
     private int cantidadStock; 
-    
-    private String nombreUnidad; // "UNI", "CAJA"
-    private int factor;          // Ej: 12
-    
+    private String nombreUnidad; 
+    private int factor;          
     private BigDecimal precioCosto;
     private BigDecimal porcentajeGanancia;
     private BigDecimal alicuotaIVA;
@@ -29,17 +25,15 @@ public class Producto {
         this.categoria = categoria;
         this.descripcion = descripcion;
         this.nombreUnidad = nombreUnidad;
-        
-        // Si no sabés el factor, ponés 1 y el sistema funciona como unidad simple
         this.factor = (factor > 0) ? factor : 1; 
-        
         this.precioCosto = precioCosto;
         this.porcentajeGanancia = porcentajeGanancia;
         this.alicuotaIVA = alicuotaIVA;
         this.cantidadStock = 0;
     }
-
-    // ... (Método calcularPrecioFinal igual que antes) ...
+    
+    
+    
     public BigDecimal calcularPrecioFinal() {
         BigDecimal ganancia = this.precioCosto.multiply(this.porcentajeGanancia);
         BigDecimal precioNeto = this.precioCosto.add(ganancia);
@@ -49,11 +43,7 @@ public class Producto {
     
     // --- LÓGICA DE STOCK FLEXIBLE ---
     
-    /**
-     * Carga stock. 
-     * @param cantidad: Cuánto entra.
-     * @param esPorBulto: TRUE si cargás cajas cerradas, FALSE si cargás sueltos.
-     */
+    
     public void agregarStock(int cantidad, boolean esPorBulto) {
         if (cantidad > 0) {
             int cantidadReal;
@@ -91,6 +81,7 @@ public class Producto {
         }
     }
     
+    
     // ... (Getters y toString iguales) ...
     public String getCodigoInterno() { return codigoInterno; }
     public String getCodigoBarra() { return codigoBarra; }
@@ -101,6 +92,19 @@ public class Producto {
     public BigDecimal getPrecio() {
     	return this.calcularPrecioFinal();
     }
+    public BigDecimal getPrecioCosto() {
+    	return this.precioCosto;
+    }
+    public BigDecimal getPorcentajeGanancia() {
+    	return this.porcentajeGanancia;
+    }
+    public BigDecimal getAlicuotaIVA() {
+    	return this.alicuotaIVA;
+    }
+    
+    public void setPrecioCosto(BigDecimal precioCosto) { this.precioCosto = precioCosto; }
+    public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) { this.porcentajeGanancia = porcentajeGanancia; }
+    public void setAlicuotaIVA(BigDecimal alicuotaIVA) { this.alicuotaIVA = alicuotaIVA; }
 
     @Override
     public String toString() {

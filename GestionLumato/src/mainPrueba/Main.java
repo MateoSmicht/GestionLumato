@@ -34,7 +34,7 @@ public class Main {
         Usuario admin = new Gerente("admin", "123", "Mateo Smicht");
         miNegocio.agregarUsuario(admin);
         
-        miNegocio.agregarUsuario(new Cajero("pepe", "0000", "Pepe Cajero"));
+        miNegocio.agregarUsuario(new Cajero("Micaela", "123", "Micaela sanchez"));
 
         // Iniciar Ventana DIRECTO AL MENU (Bypass Login)
         EventQueue.invokeLater(() -> {
