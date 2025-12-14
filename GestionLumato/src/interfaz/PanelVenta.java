@@ -437,7 +437,7 @@ public class PanelVenta extends JPanel {
 		modeloTabla.setRowCount(0);
 		Venta v = controlador.getVentaActual();
 		for (DetalleVenta d : v.getItems()) {
-			modeloTabla.addRow(new Object[] { d.getProducto().getCodigoBarra(), d.getProducto().getDescripcion(),
+			modeloTabla.addRow(new Object[] { d.getCodigoLeido(), d.getProducto().getDescripcion(),
 					d.getNombreUnidadSnapshot(), // Muestra si fue CAJA o UNI
 					d.getFactorSnapshot(), // Muestra 12 o 1
 					"$" + d.getPrecioUnitarioSnapshot(), d.getCantidad(), "$" + d.calcularSubtotal() });

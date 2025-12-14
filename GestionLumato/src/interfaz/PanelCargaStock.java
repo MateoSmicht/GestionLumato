@@ -1,14 +1,15 @@
 package interfaz;
 
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import java.util.List;
+import javax.swing.table.DefaultTableCellRenderer; // Import necesario para centrar
+import javax.swing.JLabel; // Import necesario para centrar
+
 import modelo.Empresa;
 import modelo.Producto;
+import modelo.DetalleCarga; // Usamos la clase del modelo
 import controlador.ControladorCargaStock;
-import controlador.ControladorCargaStock.ItemCarga;
 
 public class PanelCargaStock extends PanelOperacionBase {
 
@@ -18,11 +19,19 @@ public class PanelCargaStock extends PanelOperacionBase {
         super();
         this.controlador = new ControladorCargaStock(empresa);
         
-        // Ajustamos anchos de columnas para que entren los precios
-        // Indices: 0:Cod, 1:Desc, 2:Costo, 3:Venta, 4:Modo, 5:Cant, 6:Stock
-        tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(200); // Desc
-        tableDetalle.getColumnModel().getColumn(5).setPreferredWidth(50);  // Cant
+        // --- AJUSTE VISUAL DE COLUMNAS ---
+        // Indices: 0:Cod, 1:Desc, 2:FACTOR, 3:Costo, 4:Venta, 5:Modo, 6:Cant, 7:Stock
         
+        tableDetalle.getColumnModel().getColumn(0).setPreferredWidth(80);  // Cód
+        tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(200); // Desc
+        tableDetalle.getColumnModel().getColumn(2).setPreferredWidth(50);  // Factor (Chico)
+        tableDetalle.getColumnModel().getColumn(6).setPreferredWidth(60);  // Cantidad
+        
+        // Centrar la columna de Factor para que se vea prolijo
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tableDetalle.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+
         enfocarBuscador();
     }
 
@@ -33,23 +42,24 @@ public class PanelCargaStock extends PanelOperacionBase {
 
     @Override
     protected String[] getColumnasTabla() {
-        // --- CAMBIO 1: AGREGAMOS COLUMNAS DE PRECIO ---
+        // --- CAMBIO 1: AGREGAMOS "Factor" ---
         return new String[] { 
             "Cód.", 
-            "Descripción", 
-            "Costo Unit.",   // Nuevo [2]
-            "Precio Venta",  // Nuevo [3]
-            "Modo",          // [4]
-            "Cant. Sumar",   // [5] (Esta es la editable)
-            "Stock Final"    // [6]
+            "Descripción",
+            "Factor",        // [2] NUEVO
+            "Costo Unit.",   // [3]
+            "Precio Venta",  // [4]
+            "Modo",          // [5]
+            "Cant. Sumar",   // [6] (Editable)
+            "Stock Final"    // [7]
         };
     }
 
     @Override
     protected boolean isColumnaEditable(int col) {
-        // --- CAMBIO 2: ACTUALIZAMOS ÍNDICE EDITABLE ---
-        // Antes era 3, ahora al agregar 2 columnas nuevas, es la 5
-        return col == 5; 
+        // --- CAMBIO 2: EL ÍNDICE EDITABLE AHORA ES 6 ---
+        // Antes era 5, pero al meter "Factor" se corrió todo un lugar.
+        return col == 6; 
     }
 
     @Override
@@ -90,36 +100,6 @@ public class PanelCargaStock extends PanelOperacionBase {
         }
         enfocarBuscador();
     }
-
-    private void abrirDialogoAltaRapida(String codigo) {
-        JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        
-        // Abrimos el diálogo
-        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, controlador.getEmpresa(), codigo);
-        dialog.setVisible(true);
-        
-        // AL VOLVER:
-        if (dialog.isGuardadoExitoso()) {
-            try {
-                // 1. Recuperamos la cantidad que el usuario escribió en la ventanita (ej: 100)
-                int stockInicialDelDialogo = dialog.getStockIngresado();
-                
-                // 2. Agregamos el ítem a la tabla con ESA cantidad
-                controlador.agregarItemConCantidad(codigo, stockInicialDelDialogo, this.modoBulto);
-                
-                actualizarTabla();
-                txtBusqueda.setText("");
-                
-                JOptionPane.showMessageDialog(this, "¡Producto creado y agregado con cantidad: " + stockInicialDelDialogo + "!");
-                
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        enfocarBuscador(); // Devolvemos el foco para seguir escaneando
-    }
-
-    
 
     @Override
     protected void confirmarOperacion() {
@@ -183,18 +163,14 @@ public class PanelCargaStock extends PanelOperacionBase {
 
     @Override
     protected void abrirConsultaPrecio() {
-        // Lógica F6: Buscar producto seleccionado o pedir código
         String codigo = "";
         
         if (!txtBusqueda.getText().trim().isEmpty()) {
-            // Prioridad 1: Texto en barra
             String entrada = txtBusqueda.getText().trim();
             codigo = entrada.contains("*") ? entrada.split("\\*")[1] : entrada;
         } else if (tableDetalle.getSelectedRow() != -1) {
-            // Prioridad 2: Selección en tabla (Columna 0 es código)
             codigo = tableDetalle.getValueAt(tableDetalle.getSelectedRow(), 0).toString();
         } else {
-            // Prioridad 3: Pedir input
             codigo = JOptionPane.showInputDialog(this, "Ingrese Código para MODIFICAR PRECIO (F6):");
         }
 
@@ -203,14 +179,12 @@ public class PanelCargaStock extends PanelOperacionBase {
             return;
         }
 
-        Producto p = controlador.buscarProducto(codigo); // Asegurate que ControladorCargaStock tenga este método
+        Producto p = controlador.buscarProducto(codigo);
 
         if (p != null) {
             javax.swing.JFrame parentFrame = (javax.swing.JFrame) SwingUtilities.getWindowAncestor(this);
             DialogoModificarPrecio dialog = new DialogoModificarPrecio(parentFrame, controlador.getEmpresa(), p);
             dialog.setVisible(true);
-            
-            // Al volver, refrescamos la tabla porque el precio pudo cambiar
             actualizarTabla();
             enfocarBuscador();
         } else {
@@ -221,17 +195,13 @@ public class PanelCargaStock extends PanelOperacionBase {
 
     @Override
     protected void onTablaEditada(int fila, int col) {
-        // --- CAMBIO 3: ACTUALIZAMOS ÍNDICE ---
-        // Si el usuario editó la celda de cantidad (Ahora es Columna 5)
-        if (col == 5 && fila >= 0) {
+        // --- CAMBIO 3: VERIFICAMOS COLUMNA 6 ---
+        if (col == 6 && fila >= 0) {
             try {
                 Object valor = modeloTabla.getValueAt(fila, col);
                 int nuevaCant = Integer.parseInt(valor.toString());
-                
                 controlador.modificarCantidad(fila, nuevaCant);
-                
                 SwingUtilities.invokeLater(this::actualizarTabla);
-                
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Ingrese solo números enteros.");
                 actualizarTabla();
@@ -242,20 +212,20 @@ public class PanelCargaStock extends PanelOperacionBase {
 
     private void actualizarTabla() {
         modeloTabla.setRowCount(0);
-        List<ItemCarga> lista = controlador.getListaItems();
+        List<DetalleCarga> lista = controlador.getListaItems();
         
-        for (ItemCarga item : lista) {
+        for (DetalleCarga item : lista) {
             int stockActual = item.getProducto().getCantidadStock();
             int aSumar = item.getUnidadesReales();
+           
             
             modeloTabla.addRow(new Object[] {
                 item.getProducto().getCodigoBarra(),
                 item.getProducto().getDescripcion(),
-                // --- CAMBIO 4: MOSTRAMOS LOS PRECIOS ---
-                "$" + item.getProducto().getPrecioCosto(),        // Costo
-                "$" + item.getProducto().calcularPrecioFinal(),   // Venta
-                
-                item.isEsBulto() ? "BULTO (x" + item.getProducto().getFactor() + ")" : "UNIDAD",
+                item.getProducto().getFactor(), // --- CAMBIO 4: MOSTRAMOS EL FACTOR ---
+                "$" + item.getProducto().getPrecioCosto(),
+                "$" + item.getProducto().calcularPrecioFinal(),
+                item.isEsBulto() ? "BULTO" : "UNIDAD", // Ya mostramos factor en su propia columna
                 item.getCantidad(),
                 item.getProducto().getCantidadStock() + aSumar 
             });
@@ -263,7 +233,6 @@ public class PanelCargaStock extends PanelOperacionBase {
         
         lblTotalInfo.setText("Ítems a cargar: " + lista.size());
     }
-    
     
     private void actualizarIndicador(String entrada) {
         if (entrada.contains("*")) {
@@ -275,5 +244,25 @@ public class PanelCargaStock extends PanelOperacionBase {
         } else {
             lblInfoCantidad.setText("1*");
         }
+    }
+
+    // Método para abrir el alta rápida (sin cambios lógicos, solo lo mantengo aquí)
+    private void abrirDialogoAltaRapida(String codigo) {
+        javax.swing.JFrame parent = (javax.swing.JFrame) SwingUtilities.getWindowAncestor(this);
+        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, controlador.getEmpresa(), codigo);
+        dialog.setVisible(true);
+        
+        if (dialog.isGuardadoExitoso()) {
+            try {
+                int stockInicialDelDialogo = dialog.getStockIngresado();
+                controlador.agregarItemConCantidad(codigo, stockInicialDelDialogo, this.modoBulto);
+                actualizarTabla();
+                txtBusqueda.setText("");
+                JOptionPane.showMessageDialog(this, "¡Producto creado y agregado!");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        enfocarBuscador();
     }
 }

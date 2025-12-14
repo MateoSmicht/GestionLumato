@@ -2,6 +2,8 @@ package modelo;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Producto {
     
@@ -15,6 +17,7 @@ public class Producto {
     private BigDecimal precioCosto;
     private BigDecimal porcentajeGanancia;
     private BigDecimal alicuotaIVA;
+    private List<String> codigosSecundarios;
 
     public Producto(String codigoInterno, String codigoBarra, Categoria categoria, 
                     String descripcion, String nombreUnidad, int factor, 
@@ -30,6 +33,7 @@ public class Producto {
         this.porcentajeGanancia = porcentajeGanancia;
         this.alicuotaIVA = alicuotaIVA;
         this.cantidadStock = 0;
+        this.codigosSecundarios = new ArrayList<>();
     }
     
     
@@ -81,6 +85,12 @@ public class Producto {
         }
     }
     
+    public void agregarCodigoSecundario(String codigo) {
+        if (!codigo.equals(this.codigoBarra) && !codigosSecundarios.contains(codigo)) {
+            codigosSecundarios.add(codigo);
+        }
+    }
+    
     
     // ... (Getters y toString iguales) ...
     public String getCodigoInterno() { return codigoInterno; }
@@ -101,6 +111,11 @@ public class Producto {
     public BigDecimal getAlicuotaIVA() {
     	return this.alicuotaIVA;
     }
+    
+    public List<String> getCodigosSecundarios() {
+        return codigosSecundarios;
+    }
+    
     
     public void setPrecioCosto(BigDecimal precioCosto) { this.precioCosto = precioCosto; }
     public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) { this.porcentajeGanancia = porcentajeGanancia; }

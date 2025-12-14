@@ -4,48 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 import modelo.Empresa;
 import modelo.Producto;
+import modelo.DetalleCarga; // <--- Importamos la nueva clase
 
 public class ControladorCargaStock {
 
     private Empresa empresa;
-    private List<ItemCarga> listaItems;
+    private List<DetalleCarga> listaItems; // Usamos DetalleCarga
 
     public ControladorCargaStock(Empresa empresa) {
         this.empresa = empresa;
         this.listaItems = new ArrayList<>();
     }
 
-    // --- CLASE INTERNA PARA GUARDAR LO QUE VAMOS A CARGAR ---
-    public class ItemCarga {
-        private Producto producto;
-        private int cantidad;
-        private boolean esBulto;
+    // --- YA NO EXISTE LA CLASE INTERNA AQUÍ ---
 
-        public ItemCarga(Producto p, int cant, boolean bulto) {
-            this.producto = p;
-            this.cantidad = cant;
-            this.esBulto = bulto;
-        }
-        
-        // Getters para la tabla
-        public Producto getProducto() { return producto; }
-        public int getCantidad() { return cantidad; }
-        public boolean isEsBulto() { return esBulto; }
-        
-        // Calcula cuántas unidades reales se sumarán (Visual)
-        public int getUnidadesReales() {
-            return esBulto ? cantidad * producto.getFactor() : cantidad;
-        }
-        
-        public void setCantidad(int cant) { this.cantidad = cant; }
+    // Método buscar para el F6
+    public Producto buscarProducto(String codigo) {
+        return empresa.buscarProducto(codigo);
     }
-
-    // --- MÉTODOS LÓGICOS ---
+    
+    public Empresa getEmpresa() { return empresa; }
 
     public void agregarItem(String entrada, boolean modoBulto) throws Exception {
         if (entrada.isEmpty()) return;
 
-        // 1. Lógica de multiplicador (ej: "3*779...")
         int cantidad = 1;
         String codigo = entrada;
 
@@ -56,39 +38,25 @@ public class ControladorCargaStock {
         }
 
         Producto p = empresa.buscarProducto(codigo);
-        if (p == null) {
-            throw new Exception("Producto no encontrado: " + codigo);
-        }
+        if (p == null) throw new Exception("Producto no encontrado: " + codigo);
 
-        // Agregamos a la lista temporal
-        listaItems.add(new ItemCarga(p, cantidad, modoBulto));
+        // Creamos el objeto del modelo
+        listaItems.add(new DetalleCarga(p, cantidad, modoBulto));
+    }
+    
+    // Método nuevo para cuando viene del Alta con cantidad específica
+    public void agregarItemConCantidad(String codigo, int cantidad, boolean modoBulto) throws Exception {
+        Producto p = empresa.buscarProducto(codigo);
+        if (p == null) throw new Exception("Error interno.");
+        
+        int cantFinal = (cantidad > 0) ? cantidad : 1;
+        listaItems.add(new DetalleCarga(p, cantFinal, modoBulto));
     }
 
     public void eliminarItem(int index) {
         if (index >= 0 && index < listaItems.size()) {
             listaItems.remove(index);
         }
-    }
-
-    public void agregarItemConCantidad(String codigo, int cantidad, boolean modoBulto) throws Exception {
-        Producto p = empresa.buscarProducto(codigo);
-        
-        if (p == null) {
-            throw new Exception("Error interno: Producto recién creado no encontrado.");
-        }
-
-        // Si la cantidad es 0 (el usuario no puso nada), ponemos 1 por defecto para que aparezca
-        int cantidadFinal = (cantidad > 0) ? cantidad : 1;
-
-        listaItems.add(new ItemCarga(p, cantidadFinal, modoBulto));
-    }
-
-    public Producto buscarProducto(String codigo) {
-        return empresa.buscarProducto(codigo);
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
     }
     
     public void modificarCantidad(int index, int nuevaCant) {
@@ -98,23 +66,16 @@ public class ControladorCargaStock {
     }
 
     public void confirmarCargaMasiva() {
-        // Recorremos la lista y aplicamos los cambios reales a la empresa
-        for (ItemCarga item : listaItems) {
+        for (DetalleCarga item : listaItems) {
             item.getProducto().agregarStock(item.getCantidad(), item.isEsBulto());
         }
-        // Limpiamos la lista
         listaItems.clear();
     }
     
-    public List<ItemCarga> getListaItems() {
+    public List<DetalleCarga> getListaItems() {
         return listaItems;
     }
     
-    public void vaciarLista() {
-        listaItems.clear();
-    }
-    
-    // Delegamos la búsqueda para el F5
     public java.util.List<Producto> buscarPorNombre(String nombre) {
         return empresa.buscarProductosPorNombre(nombre);
     }

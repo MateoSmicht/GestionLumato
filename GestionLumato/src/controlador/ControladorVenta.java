@@ -24,40 +24,57 @@ public class ControladorVenta {
         return ventaActual;
     }
 
+    /**
+     * Agrega un producto a la venta actual.
+     * Soporta formato "Cantidad*Codigo" (ej: "3*7791234")
+     */
     public String agregarPorInput(String entrada, boolean esBulto) throws Exception {
-        if (entrada.isEmpty()) return "";
-        String codigo = entrada;
+        if (entrada == null || entrada.trim().isEmpty()) return "";
+        
+        String codigoInput = entrada;
         int cantidad = 1;
 
+        // 1. Parsear "Cantidad*Codigo"
         if (entrada.contains("*")) {
-            String[] partes = entrada.split("\\*");
-            cantidad = Integer.parseInt(partes[0]);
-            codigo = partes[1];
+            try {
+                String[] partes = entrada.split("\\*");
+                cantidad = Integer.parseInt(partes[0]);
+                codigoInput = partes[1]; // El código real escaneado
+            } catch (NumberFormatException e) {
+                throw new Exception("Formato inválido. Use 'CANTIDAD*CODIGO'");
+            }
         }
 
-        Producto p = empresa.buscarProducto(codigo);
-        if (p == null) throw new Exception("Producto no encontrado: " + codigo);
-
-        // Validar Stock (Calculando unidades reales totales)
-        int factorReal = esBulto ? p.getFactor() : 1;
-        int demandaTotal = cantidad * factorReal;
+        // 2. Buscar Producto (Por Barra o por Interno)
+        // El mapa de empresa ya resuelve el aliasing automáticamente
+        Producto p = empresa.buscarProducto(codigoInput);
         
-        if (p.getCantidadStock() < demandaTotal) {
+
+        if (p == null) {
+            throw new Exception("Producto no encontrado: " + codigoInput);
+        }
+
+        // 3. Validar Stock
+        int factorReal = esBulto ? p.getFactor() : 1;
+        int demandaTotalEnUnidades = cantidad * factorReal;
+        
+        if (p.getCantidadStock() < demandaTotalEnUnidades) {
             throw new Exception("Stock insuficiente. Disponibles: " + p.getCantidadStock() + " unidades.");
         }
 
-        ventaActual.agregarItem(p, cantidad, esBulto);
+        // 4. Agregar al carrito
+        // IMPORTANTE: Pasamos 'codigoInput' para que el ticket muestre exactamente lo que se leyó
+        ventaActual.agregarItem(p, cantidad, esBulto, codigoInput);
+        
         return "OK";
     }
 
-    // MÉTODO MODIFICADO: Descuenta stock usando las unidades reales
     public void finalizarVenta() {
         for (DetalleVenta detalle : ventaActual.getItems()) {
-            // Usamos el método nuevo que calcula (Cant * Factor)
+            // Usamos el método que calcula (Cant * Factor)
             int cantidadADescontar = detalle.getCantidadUnidadesReales();
             
             // Descontamos directo (ya validamos antes)
-            // Nota: usamos false porque ya calculamos la cantidad real nosotros
             detalle.getProducto().descontarStock(cantidadADescontar, false); 
         }
         empresa.registrarVenta(ventaActual);
@@ -70,7 +87,6 @@ public class ControladorVenta {
             ventaActual.eliminarItem(d);
         }
     }
-
 
     public void modificarCantidadItem(int indice, int nuevaCantidad) throws Exception {
         if (indice < 0 || indice >= ventaActual.getItems().size()) return;
@@ -100,7 +116,7 @@ public class ControladorVenta {
 
     public BigDecimal calcularVuelto(BigDecimal pago) {
         BigDecimal total = ventaActual.getTotal();
-        if (pago.compareTo(total) < 0) throw new IllegalArgumentException("Insuficiente");
+        if (pago.compareTo(total) < 0) throw new IllegalArgumentException("Pago Insuficiente");
         return pago.subtract(total);
     }
 
@@ -112,22 +128,19 @@ public class ControladorVenta {
         return empresa.buscarProducto(codigo);
     }
     
-   
+    // --- GESTIÓN DE VENTAS EN ESPERA ---
 
     public void guardarVentaEnEspera() {
         if (!ventaActual.getItems().isEmpty()) {
-            // Guardamos usando al vendedor como clave
             empresa.setVentaPendiente(vendedor, ventaActual);
         }
     }
 
     public boolean existeVentaPendiente() {
-        // Preguntamos por ESTE vendedor
         return empresa.hayVentaPendiente(vendedor);
     }
 
     public void restaurarVentaPendiente() {
-        // Recuperamos la de ESTE vendedor
         Venta recuperada = empresa.getVentaPendiente(vendedor);
         if (recuperada != null) {
             this.ventaActual = recuperada;
@@ -135,9 +148,7 @@ public class ControladorVenta {
     }
 
     public void descartarVentaPendiente() {
-        // Borramos la de ESTE vendedor
         empresa.borrarVentaPendiente(vendedor);
         nuevaVenta();
     }
-
 }

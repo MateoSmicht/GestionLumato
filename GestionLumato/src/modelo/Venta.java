@@ -23,9 +23,9 @@ public class Venta {
 
 
 
-    public void agregarItem(Producto producto, int cantidad, boolean esBulto) {
+    public void agregarItem(Producto p, int cantidad, boolean esBulto, String codigoLeido) {
         // Creamos el detalle pasando el flag esBulto
-        DetalleVenta detalle = new DetalleVenta(producto, cantidad, esBulto);
+        DetalleVenta detalle = new DetalleVenta(p, cantidad, esBulto, codigoLeido);
         
         this.items.add(detalle);
         this.total = this.total.add(detalle.calcularSubtotal());

@@ -10,10 +10,12 @@ public class DetalleVenta {
     private String nombreUnidadSnapshot;
     private int factorSnapshot;
     private BigDecimal precioUnitarioSnapshot;
+    private String codigoLeido;
 
-    public DetalleVenta(Producto producto, int cantidad, boolean esBulto) {
+    public DetalleVenta(Producto producto, int cantidad, boolean esBulto, String codigoLeido) {
         this.producto = producto;
         this.cantidad = cantidad;
+        this.codigoLeido = codigoLeido;
         
         if (esBulto) {
             // Vendemos la CAJA
@@ -48,4 +50,8 @@ public class DetalleVenta {
     public String getNombreUnidadSnapshot() { return nombreUnidadSnapshot; }
     public int getFactorSnapshot() { return factorSnapshot; }
     public BigDecimal getPrecioUnitarioSnapshot() { return precioUnitarioSnapshot; }
+    
+    public String getCodigoLeido() {
+        return codigoLeido;
+    }
 }
