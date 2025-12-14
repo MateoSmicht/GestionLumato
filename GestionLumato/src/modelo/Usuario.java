@@ -29,7 +29,16 @@ public abstract class Usuario {
     public String getUsername() { return username; }
     public String getNombreCompleto() { return nombreCompleto; }
     
-    @Override
+    
+    public Set<Funcion> getFuncionesPermitidas() {
+		return funcionesPermitidas;
+	}
+
+	public void setFuncionesPermitidas(Set<Funcion> funcionesPermitidas) {
+		this.funcionesPermitidas = funcionesPermitidas;
+	}
+
+	@Override
     public String toString() {
         return getNombreRol() + ": " + nombreCompleto;
     }

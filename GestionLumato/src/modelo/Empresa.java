@@ -24,6 +24,27 @@ public class Empresa {
         this.usuarios.put(u.getUsername(), u);
     }
    
+
+    public void crearUsuario(String nameUser, String clave, String nombreCompleto, Rol rol) throws Exception {
+        
+        // 1. Validación común (escrita una sola vez)
+        if (usuarios.containsKey(nameUser)) {
+            throw new Exception("El nombre de usuario '" + nameUser + "' ya existe.");
+        }
+        Usuario usuarioNuevo = null;
+        switch (rol) {
+            case GERENTE:
+                usuarioNuevo = new Gerente(nameUser, clave, nombreCompleto);
+                break;
+            case CAJERO:
+                usuarioNuevo = new Cajero(nameUser, clave, nombreCompleto);
+                break;
+            default:
+                throw new Exception("Rol desconocido");
+        }
+        agregarUsuario(usuarioNuevo); 
+    }
+   
     public boolean existeCodigoInterno(String codigoInterno) {
         for (Producto p : this.stock.values()) {
             if (p.getCodigoInterno().equalsIgnoreCase(codigoInterno)) {
