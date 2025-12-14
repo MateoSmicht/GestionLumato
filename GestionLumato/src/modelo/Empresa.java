@@ -67,7 +67,6 @@ public class Empresa {
         return resultados;
     }
     
- // En modelo/Empresa.java
 
     public void unificarProductos(String codPrincipal, String codDuplicado) throws Exception {
         Producto principal = stock.get(codPrincipal);
