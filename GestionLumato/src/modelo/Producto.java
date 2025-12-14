@@ -111,6 +111,7 @@ public class Producto {
     public BigDecimal getAlicuotaIVA() {
     	return this.alicuotaIVA;
     }
+    public Categoria getCategoria() { return categoria;}
     
     public List<String> getCodigosSecundarios() {
         return codigosSecundarios;

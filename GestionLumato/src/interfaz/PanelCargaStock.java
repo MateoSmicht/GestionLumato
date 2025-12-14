@@ -215,12 +215,11 @@ public class PanelCargaStock extends PanelOperacionBase {
         List<DetalleCarga> lista = controlador.getListaItems();
         
         for (DetalleCarga item : lista) {
-            int stockActual = item.getProducto().getCantidadStock();
             int aSumar = item.getUnidadesReales();
            
             
             modeloTabla.addRow(new Object[] {
-                item.getProducto().getCodigoBarra(),
+                item.getCodigoLeido(),
                 item.getProducto().getDescripcion(),
                 item.getProducto().getFactor(), // --- CAMBIO 4: MOSTRAMOS EL FACTOR ---
                 "$" + item.getProducto().getPrecioCosto(),

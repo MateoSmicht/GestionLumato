@@ -85,6 +85,20 @@ public class PanelGestionStock extends JPanel {
         btnReposicion.setBounds(400, 170, 300, 150);
         estilizarBoton(btnReposicion, COLOR_VERDE, Color.WHITE);
         add(btnReposicion);
+        
+        JButton btnCategoria = new JButton("<html><center><h2>NUEVA CATEGORÍA</h2><br>Clasificación de productos</center></html>");
+        btnCategoria.setBounds(225, 330, 300, 150); // Abajo de los otros dos
+        estilizarBoton(btnCategoria, new Color(241, 196, 15), Color.WHITE); // Amarillo Flat
+        // Cambiar texto a negro/gris oscuro porque el fondo es amarillo claro
+        btnCategoria.setForeground(new Color(44, 62, 80)); 
+        
+        btnCategoria.addActionListener(e -> {
+            JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
+            DialogoNuevaCategoria dialog = new DialogoNuevaCategoria(parent, empresa);
+            dialog.setVisible(true);
+        });
+        
+        add(btnCategoria);
     }
 
     private void estilizarBoton(JButton btn, Color bg, Color fg) {

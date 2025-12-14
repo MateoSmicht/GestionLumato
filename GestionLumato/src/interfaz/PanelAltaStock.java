@@ -1,12 +1,13 @@
 package interfaz;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
+import java.util.List;
 
+import modelo.Categoria;
 import modelo.Empresa;
 import controlador.ControladorStock;
 
@@ -14,12 +15,15 @@ public class PanelAltaStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    // --- CONTROLADOR ---
+    // --- CONTROLADOR Y MODELO ---
     private ControladorStock controlador;
+    private Empresa empresa; // Necesario para listar categorías
 
     // --- COMPONENTES VISUALES ---
     private JTextField txtCodigo;
     private JTextField txtDescripcion;
+    private JComboBox<Categoria> cmbCategoria; // <--- NUEVO
+    
     private JTextField txtCosto;
     private JTextField txtGanancia;
     private JTextField txtPrecioFinal;
@@ -38,12 +42,12 @@ public class PanelAltaStock extends JPanel {
     private final Color COLOR_VERDE = new Color(39, 174, 96);
 
     public PanelAltaStock(Empresa empresa) {
-        // Inicializamos el controlador
+        this.empresa = empresa;
         this.controlador = new ControladorStock(empresa);
         
         setLayout(null);
         setBackground(COLOR_FONDO);
-        setBounds(0, 0, 784, 500);
+        setBounds(0, 0, 784, 600); // Un poco más alto para que entre todo
 
         // =========================================================
         // 1. HEADER
@@ -69,60 +73,75 @@ public class PanelAltaStock extends JPanel {
         // 2. FORMULARIO
         // =========================================================
         
-        crearLabel("Código de Barras:", 20, 80);
-        txtCodigo = crearInput(20, 105, 200);
+        // --- FILA 1: Identificación ---
+        int yFila1 = 80;
+        crearLabel("Código de Barras:", 20, yFila1);
+        txtCodigo = crearInput(20, yFila1 + 25, 200);
 
-        crearLabel("Descripción:", 240, 80);
-        txtDescripcion = crearInput(240, 105, 500);
+        crearLabel("Descripción:", 240, yFila1);
+        txtDescripcion = crearInput(240, yFila1 + 25, 500);
 
-        // --- COSTOS ---
-        crearLabel("Costo ($):", 20, 160);
-        txtCosto = crearInput(20, 185, 120);
+        // --- FILA 2: Categoría (NUEVO) ---
+        int yFila2 = 145;
+        crearLabel("Categoría:", 20, yFila2);
         
-        crearLabel("IVA (%):", 160, 160);
+        cmbCategoria = new JComboBox<>();
+        cmbCategoria.setBounds(20, yFila2 + 25, 250, 35);
+        cmbCategoria.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbCategoria.setBackground(Color.WHITE);
+        cargarCategorias(); // Llenamos el combo
+        add(cmbCategoria);
+
+        // --- FILA 3: Costos y Precios ---
+        int yFila3 = 210;
+        crearLabel("Costo ($):", 20, yFila3);
+        txtCosto = crearInput(20, yFila3 + 25, 120);
+        
+        crearLabel("IVA (%):", 160, yFila3);
         cmbIVA = new JComboBox<>(new String[]{"21.0", "10.5", "0.0"});
-        cmbIVA.setBounds(160, 185, 80, 35);
+        cmbIVA.setBounds(160, yFila3 + 25, 80, 35);
         add(cmbIVA);
 
-        // --- PRECIOS ---
+        // Checkbox manual (arriba de ganancia)
         chkPrecioManual = new JCheckBox("Fijar Precio Final Manualmente");
         chkPrecioManual.setBackground(COLOR_FONDO);
         chkPrecioManual.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        chkPrecioManual.setBounds(260, 155, 250, 30);
+        chkPrecioManual.setBounds(260, yFila3, 250, 20); // Ajusté altura
         add(chkPrecioManual);
 
-        crearLabel("Ganancia (%):", 260, 160);
-        txtGanancia = crearInput(260, 185, 100);
+        crearLabel("Ganancia (%):", 260, yFila3);
+        txtGanancia = crearInput(260, yFila3 + 25, 100);
         
         JLabel lblArrow = new JLabel("➜");
         lblArrow.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblArrow.setBounds(380, 185, 30, 35);
+        lblArrow.setBounds(380, yFila3 + 25, 30, 35);
         add(lblArrow);
 
-        crearLabel("PRECIO FINAL ($):", 420, 160);
-        txtPrecioFinal = crearInput(420, 185, 150);
+        crearLabel("PRECIO FINAL ($):", 420, yFila3);
+        txtPrecioFinal = crearInput(420, yFila3 + 25, 150);
         txtPrecioFinal.setFont(new Font("Segoe UI", Font.BOLD, 16));
         txtPrecioFinal.setForeground(new Color(0, 100, 0)); 
         txtPrecioFinal.setEditable(false); 
-        txtPrecioFinal.setBackground(new Color(230, 230, 230)); // Gris al inicio
+        txtPrecioFinal.setBackground(new Color(230, 230, 230));
 
-        // --- STOCK Y UNIDAD ---
-        crearLabel("Unidad Medida:", 20, 240);
+        // --- FILA 4: Stock y Unidad ---
+        int yFila4 = 290;
+        crearLabel("Unidad Medida:", 20, yFila4);
         cmbUnidad = new JComboBox<>(new String[]{"UNI", "BULTO", "CAJA", "PACK", "KG"});
-        cmbUnidad.setBounds(20, 265, 100, 35);
+        cmbUnidad.setBounds(20, yFila4 + 25, 100, 35);
         add(cmbUnidad);
         
-        crearLabel("Factor (u. x Bulto):", 140, 240);
-        txtFactor = crearInput(140, 265, 100);
+        crearLabel("Factor (u. x Bulto):", 140, yFila4);
+        txtFactor = crearInput(140, yFila4 + 25, 100);
         txtFactor.setText("1"); 
 
-        crearLabel("Stock Inicial:", 260, 240);
-        txtStockInicial = crearInput(260, 265, 100);
+        crearLabel("Stock Inicial:", 260, yFila4);
+        txtStockInicial = crearInput(260, yFila4 + 25, 100);
         txtStockInicial.setText("0");
 
-        // BOTÓN GUARDAR
-        JButton btnGuardar = new JButton("GUARDAR PRODUCTO");
-        btnGuardar.setBounds(20, 350, 250, 50);
+        // --- BOTÓN GUARDAR ---
+        JButton btnGuardar = new JButton("GUARDAR PRODUCTO (F12)");
+        btnGuardar.setBounds(20, 380, 300, 50);
         estilizarBoton(btnGuardar, COLOR_VERDE, Color.WHITE);
         btnGuardar.setFont(new Font("Segoe UI", Font.BOLD, 16));
         add(btnGuardar);
@@ -131,7 +150,7 @@ public class PanelAltaStock extends JPanel {
         // 3. EVENTOS
         // =========================================================
 
-        // Checkbox: Activa/Desactiva campos pero NO toca el IVA
+        // Checkbox: Activa/Desactiva campos
         chkPrecioManual.addActionListener(e -> {
             boolean manual = chkPrecioManual.isSelected();
             
@@ -149,7 +168,7 @@ public class PanelAltaStock extends JPanel {
             }
         });
 
-        // Listener genérico para calcular mientras se escribe
+        // Calculadora en tiempo real
         KeyAdapter calculador = new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -161,49 +180,66 @@ public class PanelAltaStock extends JPanel {
         txtGanancia.addKeyListener(calculador);
         txtPrecioFinal.addKeyListener(calculador);
         
-        // Al cambiar IVA recalculamos (en cualquier modo)
         cmbIVA.addActionListener(e -> actualizarCalculos());
 
-        // Guardar
-        btnGuardar.addActionListener(e -> {
-            try {
-                controlador.guardarProducto(
-                    txtCodigo.getText(),
-                    txtDescripcion.getText(),
-                    txtCosto.getText(),
-                    txtGanancia.getText(),
-                    cmbIVA.getSelectedItem().toString(),
-                    cmbUnidad.getSelectedItem().toString(),
-                    txtFactor.getText(),
-                    txtStockInicial.getText()
-                );
-                
-                JOptionPane.showMessageDialog(this, "Producto guardado correctamente!");
-                limpiarFormulario();
-                
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+        // ACCIÓN DE GUARDAR (Aquí estaba tu error antes)
+        btnGuardar.addActionListener(e -> guardar());
     }
 
-    // --- MÉTODOS DELEGADOS ---
+    // --- MÉTODOS AUXILIARES ---
+
+    private void cargarCategorias() {
+        cmbCategoria.removeAllItems();
+        List<Categoria> lista = empresa.getCategorias();
+        for (Categoria c : lista) {
+            cmbCategoria.addItem(c);
+        }
+        if (lista.isEmpty()) {
+            // Opcional: Agregar una categoría dummy o avisar
+        }
+    }
+
+    private void guardar() {
+        try {
+            // 1. Obtener Categoría
+            Categoria catSeleccionada = (Categoria) cmbCategoria.getSelectedItem();
+            if (catSeleccionada == null) {
+                JOptionPane.showMessageDialog(this, "Debe seleccionar una categoría (Cree una en Gestión si no hay).");
+                return;
+            }
+
+            // 2. Llamar al controlador con TODOS los parámetros
+            controlador.guardarProducto(
+                txtCodigo.getText(),
+                txtDescripcion.getText(),
+                catSeleccionada,   // <--- AQUÍ PASAMOS EL OBJETO
+                txtCosto.getText(),
+                txtGanancia.getText(),
+                cmbIVA.getSelectedItem().toString(),
+                cmbUnidad.getSelectedItem().toString(),
+                txtFactor.getText(),
+                txtStockInicial.getText()
+            );
+            
+            JOptionPane.showMessageDialog(this, "Producto guardado correctamente!");
+            limpiarFormulario();
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void actualizarCalculos() {
         String costo = txtCosto.getText();
         String iva = cmbIVA.getSelectedItem().toString();
 
         if (chkPrecioManual.isSelected()) {
-            // MODO MANUAL: Final -> Ganancia (Respetando el IVA seleccionado)
             String precioFinal = txtPrecioFinal.getText();
             BigDecimal gananciaCalculada = controlador.calcularGanancia(costo, precioFinal, iva);
-            
             txtGanancia.setText(gananciaCalculada.toPlainString());
-            
         } else {
-            // MODO AUTO: Ganancia -> Final
             String ganancia = txtGanancia.getText();
             BigDecimal finalCalculado = controlador.calcularPrecioFinal(costo, ganancia, iva);
-            
             txtPrecioFinal.setText(finalCalculado.toString());
         }
     }
@@ -224,6 +260,9 @@ public class PanelAltaStock extends JPanel {
         txtGanancia.setEditable(true);
         txtGanancia.setBackground(Color.WHITE);
         cmbIVA.setSelectedItem("21.0");
+        
+        // Resetear categoría al primero si hay
+        if (cmbCategoria.getItemCount() > 0) cmbCategoria.setSelectedIndex(0);
     }
 
     private void crearLabel(String texto, int x, int y) {
@@ -255,6 +294,6 @@ public class PanelAltaStock extends JPanel {
     
     public void setCodigoPredefinido(String codigo) {
         txtCodigo.setText(codigo);
-        txtDescripcion.requestFocus(); // Ponemos el foco en descripción para seguir rápido
+        txtDescripcion.requestFocus(); 
     }
 }

@@ -2,6 +2,7 @@ package interfaz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import modelo.Empresa;
 import modelo.Producto;
 
@@ -9,138 +10,280 @@ public class DialogoUnificar extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private Empresa empresa;
+    
+    // Componentes Fusión
     private JTextField txtPrincipal;
     private JTextField txtDuplicado;
     private JLabel lblInfoPrincipal;
     private JLabel lblInfoDuplicado;
     
+    // Componentes Lista de Alias
+    private JList<String> listaCodigos;
+    private DefaultListModel<String> modeloLista;
+    private JButton btnEliminarAlias;
+    private Producto productoSeleccionado; // Para saber de quién es la lista
+
     public DialogoUnificar(JFrame parent, Empresa empresa) {
-        super(parent, "Unificar Códigos de Barra", true);
+        super(parent, "Gestión de Códigos y Fusión", true);
         this.empresa = empresa;
         
-        setSize(600, 400);
+        // Hacemos la ventana más ancha para que entre la lista a la derecha
+        setSize(900, 450);
         setLocationRelativeTo(parent);
-        setLayout(null);
+        getContentPane().setLayout(null);
         getContentPane().setBackground(new Color(245, 246, 250));
 
-        // --- TÍTULO ---
+        // =============================================================
+        // SECCIÓN IZQUIERDA: FUSIÓN DE PRODUCTOS
+        // =============================================================
+        
         JLabel lblTitulo = new JLabel("FUSIÓN DE PRODUCTOS");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setBounds(20, 20, 250, 30);
-        add(lblTitulo);
+        getContentPane().add(lblTitulo);
 
-        // --- BOTÓN DE AYUDA (?) ---
-        JButton btnAyuda = new JButton("?");
-        btnAyuda.setBounds(250, 20, 30, 30); // Al lado del título
-        btnAyuda.setBackground(new Color(52, 152, 219)); // Azul info
-        btnAyuda.setForeground(Color.WHITE);
-        btnAyuda.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAyuda.setBorder(BorderFactory.createEmptyBorder()); // Sin borde para que parezca ícono
-        btnAyuda.setFocusPainted(false);
-        btnAyuda.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // --- Botón Ayuda ---
         
-        // --- EL TEXTO DE AYUDA (TOOLTIP HTML) ---
-        // Usamos HTML para formatear el texto, poner negritas y saltos de linea.
-        String textoAyuda = "<html><body style='width: 250px; background-color: #FFFFE0; padding: 5px;'>"
-                + "<b>¿Qué hace esta función?</b><br><br>"
-                + "Sirve para corregir cuando un mismo producto tiene dos códigos distintos cargados en el sistema.<br><br>"
+        String ayudaFusion = "<html><body style='width: 250px; background-color: #FFFFE0; padding: 5px;'>"
+                + "<b>FUSIÓN (Izquierda):</b><br><br>"
+                + "Sirve para corregir cuando un mismo producto tiene dos códigos distintos cargados.<br><br>"
                 + "<b>1. Stock:</b> Se suma el stock del Duplicado al Principal.<br>"
-                + "<b>2. Códigos:</b> El código del duplicado se guarda como un 'Alias' dentro del Principal.<br>"
+                + "<b>2. Códigos:</b> El código duplicado se guarda como 'Alias' y ambos comparten el mismo codigo interno.<br>"
                 + "<b>3. Limpieza:</b> El producto duplicado se borra.<br><br>"
-                + "<i>Resultado: Al escanear cualquiera de los dos códigos, el sistema traerá siempre al Principal.</i>"
+                + "<i>Resultado: Al escanear cualquiera de los dos, traerá al Principal.</i>"
                 + "</body></html>";
-        
-        // Seteamos el tooltip al botón
-        btnAyuda.setToolTipText(textoAyuda);
-        
-        // Truco opcional: Hacer que el tooltip aparezca más rápido
-        ToolTipManager.sharedInstance().setInitialDelay(100); 
-        ToolTipManager.sharedInstance().setDismissDelay(10000); // Que dure 10 seg visible
-        
-        add(btnAyuda);
 
-        // --- PRODUCTO PRINCIPAL (EL QUE QUEDA) ---
+        agregarBotonAyuda(280, 20, ayudaFusion);
+
+
+        // --- 2. AYUDA DERECHA (ALIAS) ---
+        // Ubicado cerca del título "CÓDIGOS ASOCIADOS" (ajusté X a 800 para que quede al final)
+        String ayudaAlias = "<html><body style='width: 250px; background-color: #FFFFE0; padding: 5px;'>"
+                + "<b>LISTA DE ALIAS (Derecha):</b><br><br>"
+                + "Muestra todos los códigos de barra secundarios que también abren este producto.<br><br>"
+                + "• Si ves un código incorrecto aquí, selecciónalo y dale a <b>'Borrar'</b> para liberarlo."
+                + "</body></html>";
+
+        agregarBotonAyuda(800, 20, ayudaAlias);
+        
+        // ... (resto del constructor: Títulos, TextFields, Listas, etc.) ...
+    
+
+        // --- 1. PRINCIPAL ---
         JLabel lblP = new JLabel("1. Producto PRINCIPAL (El que queda):");
         lblP.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblP.setForeground(new Color(39, 174, 96)); // Verde
-        lblP.setBounds(20, 70, 400, 20);
-        add(lblP);
+        lblP.setBounds(20, 70, 300, 20);
+        getContentPane().add(lblP);
 
         txtPrincipal = new JTextField();
         txtPrincipal.setBounds(20, 100, 200, 30);
         txtPrincipal.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtPrincipal.addActionListener(e -> buscarInfo(txtPrincipal, lblInfoPrincipal));
-        add(txtPrincipal);
+        txtPrincipal.addActionListener(e -> buscarInfoPrincipal());
+        getContentPane().add(txtPrincipal);
 
         lblInfoPrincipal = new JLabel("-");
         lblInfoPrincipal.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblInfoPrincipal.setBounds(230, 100, 340, 30);
-        add(lblInfoPrincipal);
+        lblInfoPrincipal.setBounds(230, 100, 200, 30);
+        getContentPane().add(lblInfoPrincipal);
 
-        // --- PRODUCTO DUPLICADO (EL QUE SE BORRA) ---
-        JLabel lblD = new JLabel("2. Producto DUPLICADO (Se elimina y suma stock):");
+        // --- 2. DUPLICADO ---
+        JLabel lblD = new JLabel("2. Producto DUPLICADO (Se elimina):");
         lblD.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblD.setForeground(new Color(192, 57, 43)); // Rojo
-        lblD.setBounds(20, 160, 400, 20);
-        add(lblD);
+        lblD.setBounds(20, 160, 300, 20);
+        getContentPane().add(lblD);
 
         txtDuplicado = new JTextField();
         txtDuplicado.setBounds(20, 190, 200, 30);
         txtDuplicado.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtDuplicado.addActionListener(e -> buscarInfo(txtDuplicado, lblInfoDuplicado));
-        add(txtDuplicado);
+        txtDuplicado.addActionListener(e -> buscarInfoDuplicado());
+        getContentPane().add(txtDuplicado);
 
         lblInfoDuplicado = new JLabel("-");
         lblInfoDuplicado.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblInfoDuplicado.setBounds(230, 190, 340, 30);
-        add(lblInfoDuplicado);
+        lblInfoDuplicado.setBounds(230, 190, 200, 30);
+        getContentPane().add(lblInfoDuplicado);
 
-        // --- BOTÓN ACCIÓN ---
-        JButton btnUnificar = new JButton("FUSIONAR PRODUCTOS");
-        btnUnificar.setBounds(150, 280, 300, 50);
-        btnUnificar.setBackground(new Color(44, 62, 80));
-        btnUnificar.setForeground(Color.WHITE);
-        btnUnificar.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnUnificar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton btnUnificar = new JButton("FUSIONAR (Unificar Stocks)");
+        btnUnificar.setBounds(20, 303, 400, 50);
+        estilizarBoton(btnUnificar, new Color(44, 62, 80), Color.WHITE);
         btnUnificar.addActionListener(e -> unificar());
-        add(btnUnificar);
+        getContentPane().add(btnUnificar);
+
+        // =============================================================
+        // SECCIÓN DERECHA: LISTA DE CÓDIGOS ASOCIADOS (ALIAS)
+        // =============================================================
+        
+        // Separador vertical visual
+        JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
+        sep.setBounds(460, 20, 10, 380);
+        getContentPane().add(sep);
+
+        JLabel lblTituloLista = new JLabel("CÓDIGOS ASOCIADOS");
+        lblTituloLista.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTituloLista.setBounds(500, 20, 300, 30);
+        getContentPane().add(lblTituloLista);
+
+        JLabel lblSubtituloLista = new JLabel("<html>Estos códigos también abren el<br>producto principal al escanearlos.</html>");
+        lblSubtituloLista.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblSubtituloLista.setForeground(Color.GRAY);
+        lblSubtituloLista.setBounds(500, 50, 300, 40);
+        getContentPane().add(lblSubtituloLista);
+
+        // Modelo y Lista
+        modeloLista = new DefaultListModel<>();
+        listaCodigos = new JList<>(modeloLista);
+        listaCodigos.setFont(new Font("Consolas", Font.PLAIN, 14));
+        listaCodigos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        JScrollPane scrollLista = new JScrollPane(listaCodigos);
+        scrollLista.setBounds(500, 100, 350, 200);
+        getContentPane().add(scrollLista);
+
+        btnEliminarAlias = new JButton("Borrar Código Seleccionado");
+        btnEliminarAlias.setBounds(500, 310, 350, 40);
+        estilizarBoton(btnEliminarAlias, new Color(192, 57, 43), Color.WHITE); // Rojo
+        btnEliminarAlias.setEnabled(false); // Nace deshabilitado
+        btnEliminarAlias.addActionListener(e -> eliminarAliasSeleccionado());
+        getContentPane().add(btnEliminarAlias);
+        
+        
     }
 
-    private void buscarInfo(JTextField txt, JLabel lbl) {
-        String cod = txt.getText().trim();
+    // --- LÓGICA DE BÚSQUEDA ---
+
+    private void buscarInfoPrincipal() {
+        String cod = txtPrincipal.getText().trim();
         if (cod.isEmpty()) return;
         
-        Producto p = empresa.buscarProducto(cod);
-        if (p != null) {
-            lbl.setText("<html>" + p.getDescripcion() + " | Stock Actual: <b>" + p.getCantidadStock() + "</b></html>");
-            lbl.setForeground(Color.BLACK);
+        productoSeleccionado = empresa.buscarProducto(cod);
+        
+        if (productoSeleccionado != null) {
+            lblInfoPrincipal.setText("<html>" + productoSeleccionado.getDescripcion() + "<br>Stock: <b>" + productoSeleccionado.getCantidadStock() + "</b></html>");
+            lblInfoPrincipal.setForeground(Color.BLACK);
+            
+            // CARGAR LA LISTA DE LA DERECHA
+            cargarListaAlias();
+            
         } else {
-            lbl.setText("Producto no encontrado");
-            lbl.setForeground(Color.RED);
+            lblInfoPrincipal.setText("Producto no encontrado");
+            lblInfoPrincipal.setForeground(Color.RED);
+            modeloLista.clear();
+            btnEliminarAlias.setEnabled(false);
+            productoSeleccionado = null;
         }
     }
+    
+    private void cargarListaAlias() {
+        modeloLista.clear();
+        if (productoSeleccionado == null) return;
+        
+        List<String> alias = productoSeleccionado.getCodigosSecundarios();
+        
+        if (alias.isEmpty()) {
+            modeloLista.addElement("(Sin códigos extra)");
+            btnEliminarAlias.setEnabled(false);
+        } else {
+            for (String codigo : alias) {
+                modeloLista.addElement(codigo);
+            }
+            btnEliminarAlias.setEnabled(true);
+        }
+    }
+
+    private void buscarInfoDuplicado() {
+        String cod = txtDuplicado.getText().trim();
+        if (cod.isEmpty()) return;
+        Producto p = empresa.buscarProducto(cod);
+        if (p != null) {
+            lblInfoDuplicado.setText("<html>" + p.getDescripcion() + "<br>Stock: <b>" + p.getCantidadStock() + "</b></html>");
+            lblInfoDuplicado.setForeground(Color.BLACK);
+        } else {
+            lblInfoDuplicado.setText("Producto no encontrado");
+            lblInfoDuplicado.setForeground(Color.RED);
+        }
+    }
+
+    // --- LÓGICA DE ACCIONES ---
 
     private void unificar() {
         try {
             String codP = txtPrincipal.getText().trim();
             String codD = txtDuplicado.getText().trim();
 
-            if(codP.isEmpty() || codD.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Complete ambos campos.");
-                return;
-            }
+            if(codP.isEmpty() || codD.isEmpty()) return;
 
             int confirm = JOptionPane.showConfirmDialog(this, 
-                "¿Estás seguro?\nSe eliminará el producto duplicado y su stock pasará al principal.",
-                "Confirmar Fusión", JOptionPane.YES_NO_OPTION);
+                "¿Confirmar Fusión?\nStock del duplicado se suma al principal.\nEl código duplicado pasará a la lista de asociados.",
+                "Atención", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 empresa.unificarProductos(codP, codD);
-                JOptionPane.showMessageDialog(this, "¡Fusión Exitosa! Stock unificado.");
-                dispose();
+                JOptionPane.showMessageDialog(this, "¡Fusión Exitosa!");
+                
+                // Limpiar duplicado
+                txtDuplicado.setText("");
+                lblInfoDuplicado.setText("-");
+                
+                // Recargar el principal para ver el nuevo código en la lista de la derecha
+                buscarInfoPrincipal(); 
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
+    }
+
+    private void eliminarAliasSeleccionado() {
+        String codigoSeleccionado = listaCodigos.getSelectedValue();
+        
+        if (codigoSeleccionado == null || codigoSeleccionado.equals("(Sin códigos extra)")) {
+            JOptionPane.showMessageDialog(this, "Seleccione un código de la lista.");
+            return;
+        }
+
+        int resp = JOptionPane.showConfirmDialog(this, 
+                "¿Desea eliminar el código '" + codigoSeleccionado + "'?\nYa no servirá para buscar este producto.",
+                "Desvincular Código", JOptionPane.YES_NO_OPTION);
+        
+        if (resp == JOptionPane.YES_OPTION) {
+            // Llamamos al método nuevo de Empresa
+            empresa.borrarCodigoSecundario(productoSeleccionado, codigoSeleccionado);
+            
+            // Refrescamos la lista visual
+            cargarListaAlias();
+        }
+    }
+
+    // --- UTILIDADES ---
+    
+    private void agregarBotonAyuda(int x, int y, String textoTooltip) {
+        JButton btn = new JButton("?");
+        btn.setBounds(x, y, 30, 30);
+        
+        // Estilo del botón (Igual al que tenías)
+        btn.setBackground(new Color(52, 152, 219)); // Azul
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBorder(BorderFactory.createEmptyBorder());
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Asignamos el Tooltip
+        btn.setToolTipText(textoTooltip);
+        
+        // Configuración de tiempos (Aparece rápido y dura 10 seg)
+        ToolTipManager.sharedInstance().setInitialDelay(100);
+        ToolTipManager.sharedInstance().setDismissDelay(10000);
+        
+        getContentPane().add(btn);
+    }
+    
+    private void estilizarBoton(JButton btn, Color bg, Color fg) {
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 }

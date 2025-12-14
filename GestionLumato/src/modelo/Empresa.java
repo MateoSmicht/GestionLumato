@@ -11,6 +11,8 @@ public class Empresa {
     private Map<String, Usuario> usuarios;  // Clave: Username
     private List<Venta> historialVentas; 
     private Map<String, Venta> ventasPendientes;
+    private Map<Integer, Categoria> categorias;
+    private int contadorIdCategoria = 1;
 
     public Empresa(String nombre) {
         this.nombre = nombre;
@@ -18,7 +20,43 @@ public class Empresa {
         this.usuarios = new HashMap<>();
         this.historialVentas = new ArrayList<>();
         this.ventasPendientes = new HashMap<>();
+        this.categorias = new HashMap<>();
+        crearCategoria("General");
     }
+    public void crearCategoria(String nombre) {
+        String nombreNormalizado = nombre.trim();
+        for (Categoria c : categorias.values()) {
+            if (c.getNombre().equalsIgnoreCase(nombreNormalizado)) {
+                throw new IllegalArgumentException("La categoría '" + nombre + "' ya existe.");
+            }
+        }
+        int id = contadorIdCategoria++;
+        Categoria nueva = new Categoria(id, nombreNormalizado);
+        
+        // GUARDAMOS EN EL MAPA CON SU ID COMO CLAVE
+        categorias.put(id, nueva);
+    }
+    
+// En Empresa.java
+    
+    public void modificarCategoria(Categoria categoria, String nuevoNombre) {
+        String nombreNormalizado = nuevoNombre.trim();
+        
+        // Validar que no exista OTRA categoría con ese nombre
+        for (Categoria c : categorias.values()) {
+            // Si tiene el mismo nombre PERO es un ID distinto, es un duplicado prohibido
+            if (c.getNombre().equalsIgnoreCase(nombreNormalizado) && c.getId() != categoria.getId()) {
+                throw new IllegalArgumentException("Ya existe otra categoría llamada '" + nuevoNombre + "'.");
+            }
+        }
+        categoria.setNombre(nombreNormalizado);
+    }
+
+    
+    public Categoria buscarCategoriaPorId(int id) {
+        return categorias.get(id); // Retorna null si no existe, o el objeto al instante.
+    }
+ 
 
     public void agregarUsuario(Usuario u) {
         this.usuarios.put(u.getUsername(), u);
@@ -123,7 +161,11 @@ public class Empresa {
         // Ahora 'stock.get(codDuplicado)' devuelve el objeto 'principal'.
         // El objeto 'duplicado' viejo queda sin referencias y el recolector de basura lo borra.
     }
-    
+    public void borrarCodigoSecundario(Producto producto, String codigoABorrar) {
+        // 1. Lo sacamos de la lista interna del producto
+        producto.getCodigosSecundarios().remove(codigoABorrar);
+        stock.remove(codigoABorrar);
+    }
     public boolean validarNumero(String texto) {
         // 1. Chequeamos si es null O si esta vacío O si NO son digitos
         if (texto == null || texto.trim().isEmpty() || !texto.matches("\\d+")) {
@@ -159,4 +201,7 @@ public class Empresa {
 
     public List<Venta> getHistorialVentas() { return historialVentas; }
     public String getNombre() { return nombre; }
+    public List<Categoria> getCategorias() {
+        return new ArrayList<>(categorias.values());
+    }
 }

@@ -25,33 +25,38 @@ public class ControladorCargaStock {
     
     public Empresa getEmpresa() { return empresa; }
 
+// EN TUS MÉTODOS DE AGREGAR:
+    
     public void agregarItem(String entrada, boolean modoBulto) throws Exception {
         if (entrada.isEmpty()) return;
 
         int cantidad = 1;
-        String codigo = entrada;
+        String codigoLimpio = entrada; // Este será el codigoLeido
 
+        // Si viene con asterisco (ej: "10*779123")
         if (entrada.contains("*")) {
             String[] partes = entrada.split("\\*");
             cantidad = Integer.parseInt(partes[0]);
-            codigo = partes[1];
+            codigoLimpio = partes[1]; // Nos quedamos solo con el código
         }
 
-        Producto p = empresa.buscarProducto(codigo);
-        if (p == null) throw new Exception("Producto no encontrado: " + codigo);
+        Producto p = empresa.buscarProducto(codigoLimpio);
+        if (p == null) throw new Exception("Producto no encontrado: " + codigoLimpio);
 
-        // Creamos el objeto del modelo
-        listaItems.add(new DetalleCarga(p, cantidad, modoBulto));
+        // --- CAMBIO AQUÍ: Pasamos codigoLimpio al constructor ---
+        listaItems.add(new DetalleCarga(p, cantidad, modoBulto, codigoLimpio));
     }
     
-    // Método nuevo para cuando viene del Alta con cantidad específica
     public void agregarItemConCantidad(String codigo, int cantidad, boolean modoBulto) throws Exception {
         Producto p = empresa.buscarProducto(codigo);
         if (p == null) throw new Exception("Error interno.");
         
         int cantFinal = (cantidad > 0) ? cantidad : 1;
-        listaItems.add(new DetalleCarga(p, cantFinal, modoBulto));
+        
+        listaItems.add(new DetalleCarga(p, cantFinal, modoBulto, codigo));
     }
+    
+    
 
     public void eliminarItem(int index) {
         if (index >= 0 && index < listaItems.size()) {

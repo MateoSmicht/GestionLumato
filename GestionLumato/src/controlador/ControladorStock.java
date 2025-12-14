@@ -68,7 +68,7 @@ public class ControladorStock {
     /**
      * Valida y Guarda el producto en la empresa
      */
-    public void guardarProducto(String codigo, String descripcion, String strCosto, 
+    public void guardarProducto(String codigo, String descripcion,Categoria cat, String strCosto, 
                                 String strGanancia, String strIVA, String unidad, 
                                 String strFactor, String strStock) throws Exception {
         
@@ -107,11 +107,9 @@ public class ControladorStock {
         int factor = Integer.parseInt(strFactor);
         int stockIni = Integer.parseInt(strStock);
 
-        // 2. Crear Categoría Dummy (A futuro vendrá de un combo)
-        Categoria catGeneral = new Categoria(1, "General");
-
+        
         // 3. Crear el Objeto
-        Producto nuevo = new Producto(generarCodigoInterno(), codigo, catGeneral, descripcion, unidad, factor, costo, ganancia, iva);
+        Producto nuevo = new Producto(generarCodigoInterno(),codigo,cat, descripcion, unidad, factor, costo, ganancia, iva);
         
         // 4. Stock inicial
         if (stockIni > 0) {
