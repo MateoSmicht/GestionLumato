@@ -63,7 +63,18 @@ class UsuarioTest {
             "El cajero no debería tener permiso de administrador");
     }
 
-   
+    @Test
+    @DisplayName("Debe formatear el toString con el Rol y Nombre")
+    void testToString() {
+        // La clase Usuario define: getNombreRol() + ": " + nombreCompleto
+        
+        String resultadoGerente = gerente.toString();
+        String resultadoCajero = cajero.toString();
+
+        // Verificamos que contenga el Rol (implementado en la hija) y el nombre (en la padre)
+        assertEquals("Gerente General: Juan Perez", resultadoGerente);
+        assertEquals("Cajero: Maria Lopez", resultadoCajero);
+    }
 
     @Test
     @DisplayName("Debe inicializar la lista de funciones vacía (Constructor)")
