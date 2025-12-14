@@ -47,14 +47,14 @@ public class DialogoAltaProducto extends JDialog {
             // Aumentamos un poquito el alto para que entre todo cómodo
             setSize(784, 550); 
             setLocationRelativeTo(parent); 
-            setLayout(null);
+            getContentPane().setLayout(null);
             getContentPane().setBackground(new Color(245, 246, 250));
 
             // --- HEADER ---
             JPanel panelHeader = new JPanel(null);
             panelHeader.setBackground(COLOR_HEADER);
             panelHeader.setBounds(0, 0, 784, 60);
-            add(panelHeader);
+            getContentPane().add(panelHeader);
 
             JLabel lblTitulo = new JLabel("NUEVO PRODUCTO RÁPIDO");
             lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -89,14 +89,14 @@ public class DialogoAltaProducto extends JDialog {
             JLabel lblCat = new JLabel("Categoría:");
             lblCat.setBounds(20, fila2, 200, 20);
             lblCat.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            add(lblCat);
+            getContentPane().add(lblCat);
 
             cmbCategoria = new JComboBox<>();
             cmbCategoria.setBounds(20, fila2 + 25, 250, 35); // Ancho cómodo
             cmbCategoria.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             cmbCategoria.setBackground(Color.WHITE);
             cargarCategorias(); 
-            add(cmbCategoria);
+            getContentPane().add(cmbCategoria);
 
             // --- FILA 3: COSTOS Y PRECIOS (Y = 220) ---
             // Bajamos todo este bloque para que no toque la categoría
@@ -108,24 +108,24 @@ public class DialogoAltaProducto extends JDialog {
             crearLabel("IVA (%):", 160, fila3);
             cmbIVA = new JComboBox<>(new String[]{"21.0", "10.5", "0.0"});
             cmbIVA.setBounds(160, fila3 + 25, 80, 35);
-            add(cmbIVA);
+            getContentPane().add(cmbIVA);
 
             // El checkbox un poquito más arriba de los inputs para que quede alineado con labels
             chkPrecioManual = new JCheckBox("Fijar Precio Final Manualmente");
-            chkPrecioManual.setBounds(260, fila3, 250, 20); 
+            chkPrecioManual.setBounds(304, 190, 250, 20); 
             chkPrecioManual.setBackground(new Color(245, 246, 250));
-            add(chkPrecioManual);
+            getContentPane().add(chkPrecioManual);
 
-            crearLabel("Ganancia (%):", 260, fila3 + 25); // Bajamos un poco el label para que entre el check
-            txtGanancia = crearInput(260, fila3 + 50, 100); // Input más abajo
+            crearLabel("Ganancia (%):", 260, fila3 ); // Bajamos un poco el label para que entre el check
+            txtGanancia = crearInput(260, fila3 + 25, 100); // Input más abajo
             
-            JLabel lblArrow = new JLabel("➜");
+            JLabel lblArrow = new JLabel("->");
             lblArrow.setFont(new Font("Segoe UI", Font.BOLD, 20));
-            lblArrow.setBounds(380, fila3 + 50, 30, 35);
-            add(lblArrow);
+            lblArrow.setBounds(379, 245, 30, 35);
+            getContentPane().add(lblArrow);
 
-            crearLabel("PRECIO FINAL ($):", 420, fila3 + 25);
-            txtPrecioFinal = crearInput(420, fila3 + 50, 150);
+            crearLabel("PRECIO FINAL ($):", 420, fila3 );
+            txtPrecioFinal = crearInput(420, fila3 + 25, 150);
             txtPrecioFinal.setEditable(false); 
             txtPrecioFinal.setBackground(new Color(230, 230, 230));
             txtPrecioFinal.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -137,7 +137,7 @@ public class DialogoAltaProducto extends JDialog {
             crearLabel("Unidad Medida:", 20, fila4);
             cmbUnidad = new JComboBox<>(new String[]{"UNI", "BULTO", "CAJA", "PACK", "KG"});
             cmbUnidad.setBounds(20, fila4 + 25, 100, 35);
-            add(cmbUnidad);
+            getContentPane().add(cmbUnidad);
             
             crearLabel("Factor (u. x Bulto):", 140, fila4);
             txtFactor = crearInput(140, fila4 + 25, 100);
@@ -152,7 +152,7 @@ public class DialogoAltaProducto extends JDialog {
             btnGuardar.setBounds(20, 410, 300, 50); // Abajo de todo
             estilizarBoton(btnGuardar, COLOR_VERDE, Color.WHITE);
             btnGuardar.addActionListener(e -> guardar());
-            add(btnGuardar);
+            getContentPane().add(btnGuardar);
 
             // --- LÓGICA DE EVENTOS ---
             configurarLogicaMatematica();
@@ -264,7 +264,7 @@ public class DialogoAltaProducto extends JDialog {
 
     // Helpers UI
     private void crearLabel(String t, int x, int y) {
-        JLabel l = new JLabel(t); l.setBounds(x,y,150,20); add(l);
+        JLabel l = new JLabel(t); l.setBounds(x,y,150,20); getContentPane().add(l);
     }
     
     private JTextField crearInput(int x, int y, int w) {
@@ -272,7 +272,7 @@ public class DialogoAltaProducto extends JDialog {
         t.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200)), 
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        add(t); return t;
+        getContentPane().add(t); return t;
     }
     
     private void estilizarBoton(JButton b, Color bg, Color fg) {

@@ -212,7 +212,7 @@ public class PanelAltaStock extends JPanel {
             controlador.guardarProducto(
                 txtCodigo.getText(),
                 txtDescripcion.getText(),
-                catSeleccionada,   // <--- AQUÍ PASAMOS EL OBJETO
+                catSeleccionada,  
                 txtCosto.getText(),
                 txtGanancia.getText(),
                 cmbIVA.getSelectedItem().toString(),
