@@ -17,12 +17,15 @@ public class PanelAltaStock extends JPanel {
     
     // --- CONTROLADOR Y MODELO ---
     private ControladorStock controlador;
-    private Empresa empresa; // Necesario para listar categorías
+    private Empresa empresa;
 
     // --- COMPONENTES VISUALES ---
     private JTextField txtCodigo;
     private JTextField txtDescripcion;
-    private JComboBox<Categoria> cmbCategoria; // <--- NUEVO
+    
+    // --- CAMBIO IMPORTANTE: JComboBox<Object> para mezclar Texto y Categorías ---
+    private JComboBox<Object> cmbCatMadre; // Rubro General
+    private JComboBox<Object> cmbSubCat;   // Subcategoría
     
     private JTextField txtCosto;
     private JTextField txtGanancia;
@@ -47,7 +50,7 @@ public class PanelAltaStock extends JPanel {
         
         setLayout(null);
         setBackground(COLOR_FONDO);
-        setBounds(0, 0, 784, 600); // Un poco más alto para que entre todo
+        setBounds(0, 0, 784, 600);
 
         // =========================================================
         // 1. HEADER
@@ -81,16 +84,55 @@ public class PanelAltaStock extends JPanel {
         crearLabel("Descripción:", 240, yFila1);
         txtDescripcion = crearInput(240, yFila1 + 25, 500);
 
-        // --- FILA 2: Categoría (NUEVO) ---
+        // ============================================================
+        // --- FILA 2: SELECCIÓN DE CATEGORÍA EN CASCADA ---
+        // ============================================================
         int yFila2 = 145;
-        crearLabel("Categoría:", 20, yFila2);
         
-        cmbCategoria = new JComboBox<>();
-        cmbCategoria.setBounds(20, yFila2 + 25, 250, 35);
-        cmbCategoria.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbCategoria.setBackground(Color.WHITE);
-        cargarCategorias(); // Llenamos el combo
-        add(cmbCategoria);
+        // 1. COMBO MADRE (Rubro)
+        crearLabel("Rubro / General:", 20, yFila2);
+        cmbCatMadre = new JComboBox<>();
+        cmbCatMadre.setBounds(20, yFila2 + 25, 220, 35);
+        cmbCatMadre.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbCatMadre.setBackground(Color.WHITE);
+        add(cmbCatMadre);
+
+        // 2. COMBO HIJA (Subcategoría)
+        crearLabel("Subcategoría (Opcional):", 260, yFila2);
+        cmbSubCat = new JComboBox<>();
+        cmbSubCat.setBounds(260, yFila2 + 25, 220, 35);
+        cmbSubCat.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbSubCat.setBackground(Color.WHITE);
+        cmbSubCat.setEnabled(false); // Nace deshabilitado
+        add(cmbSubCat);
+
+        // LOGICA DE CARGA
+        cargarCategoriasMadre();
+
+        // EVENTO: Al cambiar el Padre, cargar las Hijas
+        cmbCatMadre.addActionListener(e -> {
+            Object itemSeleccionado = cmbCatMadre.getSelectedItem();
+            
+            cmbSubCat.removeAllItems(); // Limpiar
+            
+            if (itemSeleccionado instanceof Categoria) {
+                Categoria madre = (Categoria) itemSeleccionado;
+                List<Categoria> hijas = empresa.getSubcategorias(madre.getId());
+                
+                // Siempre habilitamos para mostrar la opción general
+                cmbSubCat.setEnabled(true);
+                
+                // 1. Agregamos la opción General (String)
+                cmbSubCat.addItem("--- GENERAL (Solo Rubro) ---");
+                
+                // 2. Agregamos las hijas (Objetos Categoria)
+                for (Categoria h : hijas) {
+                    cmbSubCat.addItem(h);
+                }
+            } else {
+                cmbSubCat.setEnabled(false);
+            }
+        });
 
         // --- FILA 3: Costos y Precios ---
         int yFila3 = 210;
@@ -102,11 +144,10 @@ public class PanelAltaStock extends JPanel {
         cmbIVA.setBounds(160, yFila3 + 25, 80, 35);
         add(cmbIVA);
 
-        // Checkbox manual (arriba de ganancia)
         chkPrecioManual = new JCheckBox("Fijar Precio Final Manualmente");
         chkPrecioManual.setBackground(COLOR_FONDO);
         chkPrecioManual.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        chkPrecioManual.setBounds(260, yFila3, 250, 20); // Ajusté altura
+        chkPrecioManual.setBounds(260, yFila3, 250, 20);
         add(chkPrecioManual);
 
         crearLabel("Ganancia (%):", 260, yFila3);
@@ -150,10 +191,9 @@ public class PanelAltaStock extends JPanel {
         // 3. EVENTOS
         // =========================================================
 
-        // Checkbox: Activa/Desactiva campos
+        // Checkbox: Activa/Desactiva campos y maneja el FOCO
         chkPrecioManual.addActionListener(e -> {
             boolean manual = chkPrecioManual.isSelected();
-            
             txtPrecioFinal.setEditable(manual); 
             txtGanancia.setEditable(!manual);   
             
@@ -161,58 +201,71 @@ public class PanelAltaStock extends JPanel {
                 txtPrecioFinal.setBackground(Color.WHITE);
                 txtGanancia.setBackground(new Color(230, 230, 230)); 
                 txtGanancia.setText(""); 
+                // ENFOCAR AUTOMÁTICAMENTE
+                txtPrecioFinal.requestFocus();
+                txtPrecioFinal.selectAll();
             } else {
                 txtPrecioFinal.setBackground(new Color(230, 230, 230)); 
                 txtGanancia.setBackground(Color.WHITE);
                 actualizarCalculos(); 
+                txtGanancia.requestFocus();
             }
         });
 
-        // Calculadora en tiempo real
         KeyAdapter calculador = new KeyAdapter() {
             @Override
-            public void keyReleased(KeyEvent e) {
-                actualizarCalculos();
-            }
+            public void keyReleased(KeyEvent e) { actualizarCalculos(); }
         };
 
         txtCosto.addKeyListener(calculador);
         txtGanancia.addKeyListener(calculador);
         txtPrecioFinal.addKeyListener(calculador);
-        
         cmbIVA.addActionListener(e -> actualizarCalculos());
 
-        // ACCIÓN DE GUARDAR (Aquí estaba tu error antes)
         btnGuardar.addActionListener(e -> guardar());
     }
 
     // --- MÉTODOS AUXILIARES ---
 
-    private void cargarCategorias() {
-        cmbCategoria.removeAllItems();
-        List<Categoria> lista = empresa.getCategorias();
+    private void cargarCategoriasMadre() {
+        cmbCatMadre.removeAllItems();
+        // Cargamos solo las categorías principales
+        List<Categoria> lista = empresa.getCategoriasMadre();
         for (Categoria c : lista) {
-            cmbCategoria.addItem(c);
+            cmbCatMadre.addItem(c);
         }
-        if (lista.isEmpty()) {
-            // Opcional: Agregar una categoría dummy o avisar
+        // Disparamos el evento para cargar subcategorías del primero (si hay)
+        if (cmbCatMadre.getItemCount() > 0) {
+            cmbCatMadre.setSelectedIndex(0);
         }
     }
 
     private void guardar() {
         try {
-            // 1. Obtener Categoría
-            Categoria catSeleccionada = (Categoria) cmbCategoria.getSelectedItem();
-            if (catSeleccionada == null) {
-                JOptionPane.showMessageDialog(this, "Debe seleccionar una categoría (Cree una en Gestión si no hay).");
+            // 1. DETERMINAR LA CATEGORÍA FINAL
+            Categoria catFinal = null;
+            
+            // Verificamos qué eligió en el segundo combo
+            Object itemSub = cmbSubCat.getSelectedItem();
+            
+            if (itemSub instanceof Categoria) {
+                // Si eligió una hija específica, usamos esa
+                catFinal = (Categoria) itemSub;
+            } else {
+                // Si eligió "--- GENERAL ---" (String) o es null, usamos la Madre
+                catFinal = (Categoria) cmbCatMadre.getSelectedItem();
+            }
+
+            if (catFinal == null) {
+                JOptionPane.showMessageDialog(this, "Debe seleccionar un Rubro/Categoría.");
                 return;
             }
 
-            // 2. Llamar al controlador con TODOS los parámetros
+            // 2. Llamar al controlador
             controlador.guardarProducto(
                 txtCodigo.getText(),
                 txtDescripcion.getText(),
-                catSeleccionada,  
+                catFinal,  // <--- Categoría calculada
                 txtCosto.getText(),
                 txtGanancia.getText(),
                 cmbIVA.getSelectedItem().toString(),
@@ -261,8 +314,8 @@ public class PanelAltaStock extends JPanel {
         txtGanancia.setBackground(Color.WHITE);
         cmbIVA.setSelectedItem("21.0");
         
-        // Resetear categoría al primero si hay
-        if (cmbCategoria.getItemCount() > 0) cmbCategoria.setSelectedIndex(0);
+        // Resetear combos
+        cargarCategoriasMadre();
     }
 
     private void crearLabel(String texto, int x, int y) {

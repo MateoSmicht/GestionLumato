@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.util.List; 
 
 import modelo.Categoria;
@@ -17,13 +18,15 @@ public class DialogoAltaProducto extends JDialog {
     
     // Modelos y Controladores
     private ControladorStock controlador;
-    private Empresa empresa; // Variable de clase
+    private Empresa empresa; 
     
-    // Estado
     private boolean guardadoExitoso = false; 
 
     // Componentes Visuales
-    private JComboBox<Categoria> cmbCategoria;
+    // --- CAMBIO: Usamos Object para mezclar "Texto" y "Categoria" ---
+    private JComboBox<Object> cmbCatMadre; 
+    private JComboBox<Object> cmbSubCat;   
+
     private JTextField txtCodigo;
     private JTextField txtDescripcion;
     private JTextField txtCosto;
@@ -44,7 +47,6 @@ public class DialogoAltaProducto extends JDialog {
             this.empresa = empresa;
             this.controlador = new ControladorStock(empresa);
             
-            // Aumentamos un poquito el alto para que entre todo cómodo
             setSize(784, 550); 
             setLocationRelativeTo(parent); 
             getContentPane().setLayout(null);
@@ -69,12 +71,11 @@ public class DialogoAltaProducto extends JDialog {
             panelHeader.add(btnCerrar);
 
             // ============================================================
-            // FORMULARIO ORGANIZADO POR FILAS
+            // FORMULARIO
             // ============================================================
             
-            // --- FILA 1: IDENTIFICACIÓN (Y = 80) ---
+            // --- FILA 1: IDENTIFICACIÓN ---
             int fila1 = 80;
-            
             crearLabel("Código de Barras:", 20, fila1);
             txtCodigo = crearInput(20, fila1 + 25, 200);
             txtCodigo.setText(codigoPredefinido); 
@@ -82,26 +83,63 @@ public class DialogoAltaProducto extends JDialog {
             crearLabel("Descripción:", 240, fila1);
             txtDescripcion = crearInput(240, fila1 + 25, 500);
 
-            // --- FILA 2: CATEGORÍA (Y = 150) --- 
-            // Le damos su propio espacio para que no choque con nada
+            // ============================================================
+            // --- FILA 2: CATEGORÍA (CORREGIDO PARA OPCIÓN "GENERAL") --- 
+            // ============================================================
             int fila2 = 150;
             
-            JLabel lblCat = new JLabel("Categoría:");
-            lblCat.setBounds(20, fila2, 200, 20);
-            lblCat.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            getContentPane().add(lblCat);
+            JLabel lblRubro = new JLabel("Rubro / General:");
+            lblRubro.setBounds(20, fila2, 200, 20);
+            lblRubro.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            getContentPane().add(lblRubro);
 
-            cmbCategoria = new JComboBox<>();
-            cmbCategoria.setBounds(20, fila2 + 25, 250, 35); // Ancho cómodo
-            cmbCategoria.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            cmbCategoria.setBackground(Color.WHITE);
-            cargarCategorias(); 
-            getContentPane().add(cmbCategoria);
+            cmbCatMadre = new JComboBox<>();
+            cmbCatMadre.setBounds(20, fila2 + 25, 220, 35);
+            cmbCatMadre.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            cmbCatMadre.setBackground(Color.WHITE);
+            getContentPane().add(cmbCatMadre);
 
-            // --- FILA 3: COSTOS Y PRECIOS (Y = 220) ---
-            // Bajamos todo este bloque para que no toque la categoría
+            JLabel lblSub = new JLabel("Subcategoría (Opcional):");
+            lblSub.setBounds(260, fila2, 200, 20);
+            lblSub.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            getContentPane().add(lblSub);
+
+            cmbSubCat = new JComboBox<>();
+            cmbSubCat.setBounds(260, fila2 + 25, 220, 35);
+            cmbSubCat.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            cmbSubCat.setBackground(Color.WHITE);
+            cmbSubCat.setEnabled(false);
+            getContentPane().add(cmbSubCat);
+
+            // CARGAR PADRES
+            cargarCategoriasMadre();
+
+            // EVENTO DE SELECCIÓN
+            cmbCatMadre.addActionListener(e -> {
+                Object itemSeleccionado = cmbCatMadre.getSelectedItem();
+                cmbSubCat.removeAllItems();
+                
+                if (itemSeleccionado instanceof Categoria) {
+                    Categoria madre = (Categoria) itemSeleccionado;
+                    List<Categoria> hijas = empresa.getSubcategorias(madre.getId());
+                    
+                    // SIEMPRE habilitamos para mostrar la opción general
+                    cmbSubCat.setEnabled(true);
+                    
+                    // 1. Agregamos la opción General
+                    cmbSubCat.addItem("--- GENERAL (Solo Rubro) ---");
+                    
+                    // 2. Agregamos hijas reales
+                    for (Categoria h : hijas) {
+                        cmbSubCat.addItem(h);
+                    }
+                } else {
+                    cmbSubCat.setEnabled(false);
+                }
+            });
+
+            // --- FILA 3: COSTOS Y PRECIOS ---
             int fila3 = 220;
-            
             crearLabel("Costo ($):", 20, fila3);
             txtCosto = crearInput(20, fila3 + 25, 120);
             
@@ -110,14 +148,13 @@ public class DialogoAltaProducto extends JDialog {
             cmbIVA.setBounds(160, fila3 + 25, 80, 35);
             getContentPane().add(cmbIVA);
 
-            // El checkbox un poquito más arriba de los inputs para que quede alineado con labels
             chkPrecioManual = new JCheckBox("Fijar Precio Final Manualmente");
-            chkPrecioManual.setBounds(304, 190, 250, 20); 
+            chkPrecioManual.setBounds(292, 287, 250, 20); 
             chkPrecioManual.setBackground(new Color(245, 246, 250));
             getContentPane().add(chkPrecioManual);
 
-            crearLabel("Ganancia (%):", 260, fila3 ); // Bajamos un poco el label para que entre el check
-            txtGanancia = crearInput(260, fila3 + 25, 100); // Input más abajo
+            crearLabel("Ganancia (%):", 260, fila3 );
+            txtGanancia = crearInput(260, fila3 + 25, 100); 
             
             JLabel lblArrow = new JLabel("->");
             lblArrow.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -131,9 +168,8 @@ public class DialogoAltaProducto extends JDialog {
             txtPrecioFinal.setFont(new Font("Segoe UI", Font.BOLD, 14));
             txtPrecioFinal.setForeground(new Color(0, 100, 0));
 
-            // --- FILA 4: LOGÍSTICA (Y = 320) ---
+            // --- FILA 4: LOGÍSTICA ---
             int fila4 = 320;
-            
             crearLabel("Unidad Medida:", 20, fila4);
             cmbUnidad = new JComboBox<>(new String[]{"UNI", "BULTO", "CAJA", "PACK", "KG"});
             cmbUnidad.setBounds(20, fila4 + 25, 100, 35);
@@ -149,26 +185,46 @@ public class DialogoAltaProducto extends JDialog {
 
             // --- BOTÓN ---
             JButton btnGuardar = new JButton("GUARDAR Y AGREGAR (F12)");
-            btnGuardar.setBounds(20, 410, 300, 50); // Abajo de todo
+            btnGuardar.setBounds(20, 410, 300, 50); 
             estilizarBoton(btnGuardar, COLOR_VERDE, Color.WHITE);
             btnGuardar.addActionListener(e -> guardar());
             getContentPane().add(btnGuardar);
 
-            // --- LÓGICA DE EVENTOS ---
-            configurarLogicaMatematica();
+            // --- LOGICA DE EVENTOS (FOCO MEJORADO) ---
+            chkPrecioManual.addActionListener(e -> {
+                boolean manual = chkPrecioManual.isSelected();
+                txtPrecioFinal.setEditable(manual);
+                txtGanancia.setEditable(!manual);
+                if(manual) { 
+                    txtPrecioFinal.setBackground(Color.WHITE); 
+                    txtGanancia.setBackground(new Color(230, 230, 230)); 
+                    txtGanancia.setText("");
+                    // FOCO AUTOMÁTICO AL PRECIO
+                    txtPrecioFinal.requestFocus();
+                    txtPrecioFinal.selectAll();
+                }
+                else { 
+                    txtPrecioFinal.setBackground(new Color(230, 230, 230)); 
+                    txtGanancia.setBackground(Color.WHITE); 
+                    actualizarCalculos();
+                    txtGanancia.requestFocus();
+                }
+            });
             
-            // Teclas Rápidas (ESC y F12)
+            KeyAdapter k = new KeyAdapter() { public void keyReleased(KeyEvent e) { actualizarCalculos(); } };
+            txtCosto.addKeyListener(k); txtGanancia.addKeyListener(k); txtPrecioFinal.addKeyListener(k);
+            cmbIVA.addActionListener(e -> actualizarCalculos());
+            
+            // Teclas Rápidas
             KeyStroke escapeKey = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
             getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKey, "CERRAR");
             getRootPane().getActionMap().put("CERRAR", new AbstractAction() {
-                @Override
                 public void actionPerformed(ActionEvent e) { dispose(); }
             });
             
             KeyStroke f12Key = KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0);
             getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f12Key, "GUARDAR");
             getRootPane().getActionMap().put("GUARDAR", new AbstractAction() {
-                @Override
                 public void actionPerformed(ActionEvent e) { guardar(); }
             });
 
@@ -177,22 +233,31 @@ public class DialogoAltaProducto extends JDialog {
 
     private void guardar() {
         try {
-            Categoria catSeleccionada = (Categoria) cmbCategoria.getSelectedItem();
+            // 1. DETERMINAR LA CATEGORÍA FINAL
+            Categoria catFinal = null;
+            Object itemSub = cmbSubCat.getSelectedItem();
             
-            if (catSeleccionada == null) {
-                throw new Exception("Debe seleccionar una categoría.");
+            // Si eligió una hija real, la usamos. Si eligió "--- GENERAL ---" o null, usamos la Madre.
+            if (itemSub instanceof Categoria) {
+                catFinal = (Categoria) itemSub;
+            } else {
+                catFinal = (Categoria) cmbCatMadre.getSelectedItem();
+            }
+
+            if (catFinal == null) {
+                throw new Exception("Debe seleccionar un Rubro/Categoría.");
             }
             
             controlador.guardarProducto(
                 txtCodigo.getText(), 
                 txtDescripcion.getText(),
-                catSeleccionada, 
+                catFinal, // Usamos la categoría calculada
                 txtCosto.getText(),
                 txtGanancia.getText(), 
                 cmbIVA.getSelectedItem().toString(),
                 cmbUnidad.getSelectedItem().toString(), 
                 txtFactor.getText(),
-                "0" // Stock 0 en BD, el real se retorna al panel de carga
+                "0" 
             );
             
             this.guardadoExitoso = true;
@@ -203,18 +268,19 @@ public class DialogoAltaProducto extends JDialog {
         }
     }
     
-    private void cargarCategorias() {
-        if (empresa == null) return; // Protección extra
+    private void cargarCategoriasMadre() {
+        if (empresa == null) return;
+        cmbCatMadre.removeAllItems();
         
-        cmbCategoria.removeAllItems();
-        List<Categoria> lista = empresa.getCategorias();
-        
+        List<Categoria> lista = empresa.getCategoriasMadre();
         for (Categoria c : lista) {
-            cmbCategoria.addItem(c);
+            cmbCatMadre.addItem(c);
         }
         
-        if (lista.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "¡Atención! No hay categorías creadas. Vaya a Gestión de Stock para crear una.");
+        if (cmbCatMadre.getItemCount() > 0) {
+            cmbCatMadre.setSelectedIndex(0);
+        } else {
+             JOptionPane.showMessageDialog(this, "¡Atención! No hay categorías creadas.");
         }
     }
 
@@ -229,28 +295,6 @@ public class DialogoAltaProducto extends JDialog {
     }
     
     public boolean isGuardadoExitoso() { return guardadoExitoso; }
-
-    private void configurarLogicaMatematica() {
-        chkPrecioManual.addActionListener(e -> {
-            boolean manual = chkPrecioManual.isSelected();
-            txtPrecioFinal.setEditable(manual);
-            txtGanancia.setEditable(!manual);
-            if(manual) { 
-                txtPrecioFinal.setBackground(Color.WHITE); 
-                txtGanancia.setBackground(new Color(230, 230, 230)); 
-                txtGanancia.setText("");
-            }
-            else { 
-                txtPrecioFinal.setBackground(new Color(230, 230, 230)); 
-                txtGanancia.setBackground(Color.WHITE); 
-                actualizarCalculos(); 
-            }
-        });
-        
-        KeyAdapter k = new KeyAdapter() { public void keyReleased(KeyEvent e) { actualizarCalculos(); } };
-        txtCosto.addKeyListener(k); txtGanancia.addKeyListener(k); txtPrecioFinal.addKeyListener(k);
-        cmbIVA.addActionListener(e -> actualizarCalculos());
-    }
 
     private void actualizarCalculos() {
         String costo = txtCosto.getText();

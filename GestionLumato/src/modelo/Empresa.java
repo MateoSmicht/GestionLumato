@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Empresa {
     private String nombre;
@@ -21,23 +22,31 @@ public class Empresa {
         this.historialVentas = new ArrayList<>();
         this.ventasPendientes = new HashMap<>();
         this.categorias = new HashMap<>();
-        crearCategoria("General");
+      
     }
-    public void crearCategoria(String nombre) {
-        String nombreNormalizado = nombre.trim();
-        for (Categoria c : categorias.values()) {
-            if (c.getNombre().equalsIgnoreCase(nombreNormalizado)) {
-                throw new IllegalArgumentException("La categoría '" + nombre + "' ya existe.");
-            }
-        }
-        int id = contadorIdCategoria++;
-        Categoria nueva = new Categoria(id, nombreNormalizado);
-        
-        // GUARDAMOS EN EL MAPA CON SU ID COMO CLAVE
-        categorias.put(id, nueva);
+ // 1. Modificar método de crear (ahora recibe idPadre)
+    public void crearCategoria(String nombre, Integer idPadre) {
+        // Validación básica...
+        int nuevoId = categorias.size() + 1;
+        Categoria c = new Categoria(nuevoId, nombre, idPadre);
+        categorias.put(nuevoId, c);
+    }
+
+    // 2. Nuevo método: Obtener solo las categorías principales
+    public List<Categoria> getCategoriasMadre() {
+        return categorias.values().stream()
+                .filter(Categoria::esMadre)
+                .collect(Collectors.toList());
     }
     
-// En Empresa.java
+    // 3. Nuevo método: Obtener hijas de una madre específica
+    public List<Categoria> getSubcategorias(int idMadre) {
+        return categorias.values().stream()
+                .filter(c -> c.getIdPadre() != null && c.getIdPadre() == idMadre)
+                .collect(Collectors.toList());
+    }
+    
+
     
     public void modificarCategoria(Categoria categoria, String nuevoNombre) {
         String nombreNormalizado = nuevoNombre.trim();
@@ -104,6 +113,42 @@ public class Empresa {
         Usuario u = this.usuarios.get(username);
         if (u != null && u.validarPassword(password)) return u;
         return null;
+    }
+    
+
+    public List<Producto> buscarConFiltros(String texto, Categoria categoriaFiltro, Integer stockMaximo) {
+        String textoMin = texto.toLowerCase().trim();
+        
+        return stock.values().stream()
+                // 1. Texto (Igual que antes)
+                .filter(p -> p.getDescripcion().toLowerCase().contains(textoMin) || 
+                             p.getCodigoBarra().contains(textoMin))
+                
+                // 2. FILTRO DE CATEGORÍA (MEJORADO)
+                .filter(p -> {
+                    if (categoriaFiltro == null) return true; // Si es "TODAS", pasa
+                    
+                    Categoria catProd = p.getCategoria();
+                    if (catProd == null) return false;
+
+                    // A. Coincidencia Exacta (El producto es de esa categoría)
+                    boolean esExacta = catProd.getId() == categoriaFiltro.getId();
+                    
+                    // B. Coincidencia Jerárquica (El producto es hijo de la categoría seleccionada)
+                    // Esto sirve si selecciono "Perfumería" y el producto es "Jabón"
+                    boolean esHija = catProd.getIdPadre() != null && 
+                                     catProd.getIdPadre() == categoriaFiltro.getId();
+                                     
+                    return esExacta || esHija;
+                })
+                
+                // 3. Stock (Igual que antes)
+                .filter(p -> {
+                    if (stockMaximo == null) return true;
+                    return p.getCantidadStock() <= stockMaximo;
+                })
+                
+                .collect(Collectors.toList());
     }
 
     public void agregarProducto(Producto p) {

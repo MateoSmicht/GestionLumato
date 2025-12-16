@@ -9,8 +9,8 @@ public class Main {
         Empresa miNegocio = new Empresa("Gestion Lumato V");
 
         // ... carga de productos ...
-        Categoria almacen = new Categoria(1, "Almacén");
-        Categoria perfumeria = new Categoria(2, "perfumeria");
+        Categoria almacen = new Categoria(1, "Almacén",1);
+        Categoria perfumeria = new Categoria(2, "perfumeria",2);
         Producto arroz = new Producto("A-01", "77912", almacen, "Arroz Gallo","BULTO",24, 
                 new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
         arroz.agregarStock(50,true);

@@ -16,7 +16,7 @@ class ProductoTest {
     @BeforeEach
     void setUp() {
         // Configuramos un entorno limpio antes de cada test
-        categoriaDummy = new Categoria(1, "General");
+        categoriaDummy = new Categoria(2,"EJEMPLO",1);
         
         // Creamos un producto base:
         // Costo: $100
