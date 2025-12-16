@@ -4,247 +4,275 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import modelo.Empresa;
-import modelo.Funcion; // Para verificar permisos
+import modelo.Funcion;
 import modelo.Usuario;
 
 public class MainForm extends JFrame {
 
-	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
+    private static final long serialVersionUID = 1L;
+    
+    // --- REFERENCIAS ---
+    private Empresa empresa;
+    private Usuario usuarioLogueado;
 
-	// Referencias
-	private Empresa empresa;
-	private Usuario usuarioLogueado;
+    // --- COMPONENTES VISUALES ---
+    private JPanel contentPane;
+    private JPanel panelCabecera;
+    private JPanel panelCuerpo; // Aquí se intercambian las pantallas
 
-	// Paneles
-	private JPanel panelCabecera;
-	private JPanel panelCuerpo; // Aquí cambiaremos entre Menú y Venta
+    public MainForm(Empresa empresa, Usuario usuario) {
+        this.empresa = empresa;
+        this.usuarioLogueado = usuario;
 
-	public MainForm(Empresa empresa, Usuario usuario) {
-		this.empresa = empresa;
-		this.usuarioLogueado = usuario;
+        // Configuración de la Ventana Principal
+        setTitle("Sistema de Gestión - " + empresa.getNombre());
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setBounds(100, 100, 800, 600);
+        setLocationRelativeTo(null); // Centrar en pantalla
 
-		setTitle("Sistema de Gestión - " + empresa.getNombre());
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 800, 600);
-		contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
-		contentPane.setLayout(null);
+        contentPane = new JPanel();
+        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        setContentPane(contentPane);
+        contentPane.setLayout(null);
 
-		// =============================================================
-		// 1. CABECERA (Siempre visible)
-		// =============================================================
-		panelCabecera = new JPanel();
-		panelCabecera.setBackground(new Color(230, 230, 250)); // Color Lavanda suave
-		panelCabecera.setBounds(0, 0, 784, 50);
-		panelCabecera.setLayout(null);
-		contentPane.add(panelCabecera);
+        // =============================================================
+        // 1. CABECERA (Fija arriba)
+        // =============================================================
+        panelCabecera = new JPanel();
+        panelCabecera.setBackground(new Color(230, 230, 250)); // Lavanda suave
+        panelCabecera.setBounds(0, 0, 784, 50);
+        panelCabecera.setLayout(null);
+        contentPane.add(panelCabecera);
 
-		JLabel lblInfoUser = new JLabel("Operador:" + usuario.getNombreCompleto());
-		lblInfoUser.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblInfoUser.setBounds(20, 11, 400, 38);
-		panelCabecera.add(lblInfoUser);
+        JLabel lblInfoUser = new JLabel("Operador: " + usuario.getNombreCompleto());
+        lblInfoUser.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblInfoUser.setBounds(20, 11, 400, 28);
+        panelCabecera.add(lblInfoUser);
 
-		JButton btnLogout = new JButton("Cerrar Sesión");
-		btnLogout.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				cerrarSesion();
-			}
-		});
-		btnLogout.setBounds(662, 21, 97, 23);
-		panelCabecera.add(btnLogout);
+        JButton btnLogout = new JButton("Cerrar Sesión");
+        btnLogout.setBounds(630, 12, 120, 25);
+        btnLogout.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnLogout.setBackground(new Color(192, 57, 43));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setFocusPainted(false);
+        btnLogout.addActionListener(e -> cerrarSesion());
+        panelCabecera.add(btnLogout);
 
-		// =============================================================
-		// 2. CUERPO (Donde ocurre la magia)
-		// =============================================================
-		panelCuerpo = new JPanel();
-		panelCuerpo.setBounds(0, 50, 784, 511);
-		panelCuerpo.setLayout(null); // Layout absoluto para WindowBuilder
-		contentPane.add(panelCuerpo);
+        // =============================================================
+        // 2. CUERPO (Dinámico)
+        // =============================================================
+        panelCuerpo = new JPanel();
+        panelCuerpo.setBounds(0, 50, 784, 511);
+        panelCuerpo.setLayout(null); 
+        contentPane.add(panelCuerpo);
 
-		// Al iniciar, mostramos el menú de botones
-		mostrarMenu();
-	}
+        // Al iniciar, mostramos el Dashboard
+        mostrarMenuPrincipal();
+    }
 
-	/**
-	 * Dibuja los botones del menú principal en el panelCuerpo
-	 */
-	public void mostrarMenu() {
-		// 1. Limpiamos lo que haya (por si veníamos de Venta)
+    // =============================================================
+    // MÉTODOS DE NAVEGACIÓN (El Cerebro de la App)
+    // =============================================================
+
+    /**
+     * PANTALLA 1: MENÚ PRINCIPAL (Dashboard)
+     */
+    public void mostrarMenuPrincipal() {
+        panelCuerpo.removeAll();
+
+        // Botón 1: PUNTO DE VENTA
+        JButton btnVenta = crearBotonMenu("PUNTO DE VENTA", 50, 50);
+        if (usuarioLogueado.puede(Funcion.REGISTRAR_VENTA)) {
+            btnVenta.addActionListener(e -> abrirPanelVenta());
+        } else {
+            deshabilitarBoton(btnVenta);
+        }
+        panelCuerpo.add(btnVenta);
+
+        // Botón 2: GESTIÓN DE STOCK (Lleva al submenú de colores)
+        JButton btnStock = crearBotonMenu("GESTIÓN STOCK", 280, 50);
+        if (usuarioLogueado.puede(Funcion.CARGAR_PRODUCTO)) {
+            btnStock.addActionListener(e -> abrirSubmenuStock());
+        } else {
+            deshabilitarBoton(btnStock);
+        }
+        panelCuerpo.add(btnStock);
+
+        // Botón 3: ESTADÍSTICAS
+        JButton btnStats = crearBotonMenu("ESTADÍSTICAS", 510, 50);
+        if (!usuarioLogueado.puede(Funcion.VER_ESTADISTICAS)) {
+            deshabilitarBoton(btnStats);
+        }
+        panelCuerpo.add(btnStats);
+
+        refrescarPanel();
+    }
+
+    /**
+     * PANTALLA 2: SUBMENÚ STOCK (Panel de botones de colores)
+     */
+    private void abrirSubmenuStock() {
+        panelCuerpo.removeAll();
+
+        // Instanciamos el panel intermedio
+        PanelGestionStock panelGestion = new PanelGestionStock(empresa);
+        panelGestion.setBounds(0, 0, 784, 511);
+
+        // --- CONEXIONES DE NAVEGACIÓN ---
+
+        // 1. Botón "Volver al Inicio" (Header del panel)
+        panelGestion.btnVolver.addActionListener(e -> mostrarMenuPrincipal());
+
+        // 2. Botón "Alta de Producto" (Azul) -> Va al formulario
+        panelGestion.btnAltaProducto.addActionListener(e -> abrirPanelAltaStock());
+
+        // 3. Botón "Reposición" (Verde) -> Va al buscador/tabla en modo pantalla completa
+        panelGestion.btnReposicion.addActionListener(e -> abrirPanelCargaStock());
+
+        panelCuerpo.add(panelGestion);
+        refrescarPanel();
+    }
+
+    /**
+     * PANTALLA 3: FORMULARIO ALTA (Reutilizando la lógica DRY)
+     */
+    private void abrirPanelAltaStock() {
+        panelCuerpo.removeAll();
+
+        // Usamos el wrapper PanelAltaStock
+        PanelAltaStock panelAlta = new PanelAltaStock(empresa);
+        panelAlta.setBounds(0, 0, 784, 511);
+
+        // Configuración de retorno:
+        // Si cancela o vuelve, regresa al Submenú de Stock (Colores), no al principal.
+        panelAlta.accionVolverExterna = () -> abrirSubmenuStock();
+
+        panelCuerpo.add(panelAlta);
+        refrescarPanel();
+    }
+    
+    /**
+     * PANTALLA 4: CONSULTA / REPOSICIÓN (Pantalla completa)
+     */
+    private void abrirPanelConsulta() {
+        panelCuerpo.removeAll();
+        
+        // Aquí usamos el PanelConsultaStock, pero necesitamos agregarle un botón de volver
+        // Como PanelConsultaStock es BorderLayout, lo envolvemos o modificamos.
+        // Opción rápida: Lo metemos directo y asumimos que usará el menú del sistema o agregamos un botón flotante.
+        
+        PanelConsultaStock panelConsulta = new PanelConsultaStock(empresa);
+        
+        // TRUCO: Agregamos un botón "Volver" al panel de filtros del PanelConsulta
+        // (Esto requiere que PanelConsultaStock tenga un método para agregar componentes externos 
+        // o modificamos la clase, pero por ahora lo dejamos simple).
+        
+        // Para que se vea bien en pantalla completa
+        panelConsulta.setBounds(0, 0, 784, 511);
+        
+        // Creamos un contenedor simple para agregarle un botón de "Volver al Menú Stock" arriba
+        JPanel contenedor = new JPanel(new java.awt.BorderLayout());
+        contenedor.setBounds(0, 0, 784, 511);
+        
+        JButton btnVolverAtras = new JButton("<< Volver al Menú de Gestión");
+        btnVolverAtras.setBackground(new Color(44, 62, 80));
+        btnVolverAtras.setForeground(Color.WHITE);
+        btnVolverAtras.addActionListener(e -> abrirSubmenuStock());
+        
+        contenedor.add(btnVolverAtras, java.awt.BorderLayout.NORTH);
+        contenedor.add(panelConsulta, java.awt.BorderLayout.CENTER);
+        
+        panelCuerpo.add(contenedor);
+        refrescarPanel();
+    }
+
+    /**
+     * ESPECIAL: Ir directo a crear producto desde la Venta (Cuando no existe código)
+     */
+    public void abrirPanelStockConCodigo(String codigo) {
+        panelCuerpo.removeAll();
+
+        // Usamos el Formulario Maestro directamente para mayor flexibilidad
+        PanelFormularioProducto formulario = new PanelFormularioProducto(
+            empresa, 
+            codigo, 
+            () -> abrirPanelVenta(), // Al guardar -> Volver a vender
+            () -> abrirPanelVenta()  // Al cancelar -> Volver a vender
+        );
+        
+        formulario.setBounds(0, 0, 784, 511);
+        panelCuerpo.add(formulario);
+        refrescarPanel();
+    }
+    
+    // --- STUBS (Marcadores de posición) ---
+
+   
+    private void abrirPanelVenta() {
 		panelCuerpo.removeAll();
-
-		// 2. Botón IR A VENTAS
-		JButton btnVenta = new JButton("PUNTO DE VENTA");
-		btnVenta.setFont(new Font("Tahoma", Font.BOLD, 16));
-		btnVenta.setBounds(50, 50, 200, 100);
-
-		// Lógica de Permisos: Si no puede vender, deshabilitamos el botón
-		if (usuarioLogueado.puede(Funcion.REGISTRAR_VENTA)) {
-			btnVenta.setEnabled(true);
-			btnVenta.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					abrirPanelVenta();
-				}
-			});
-		} else {
-			btnVenta.setEnabled(false);
-			btnVenta.setToolTipText("No tienes permisos para vender");
-		}
-		panelCuerpo.add(btnVenta);
-
-		// 3. Botón STOCK (Ejemplo)
-		JButton btnStock = new JButton("GESTIÓN STOCK");
-		btnStock.setFont(new Font("Tahoma", Font.BOLD, 16));
-		btnStock.setBounds(280, 50, 200, 100);
-		// Lógica: Solo si puede cargar productos
-		if (usuarioLogueado.puede(Funcion.CARGAR_PRODUCTO)) {
-			btnStock.setEnabled(true);
-			btnStock.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					abrirMenuStock();
-				}
-			});
-		} else {
-			btnStock.setEnabled(false);
-		}
-		panelCuerpo.add(btnStock);
-
-		// 4. Botón ESTADÍSTICAS (Ejemplo)
-		JButton btnStats = new JButton("ESTADÍSTICAS");
-		btnStats.setFont(new Font("Tahoma", Font.BOLD, 16));
-		btnStats.setBounds(510, 50, 200, 100);
-
-		if (usuarioLogueado.puede(Funcion.VER_ESTADISTICAS)) {
-			btnStats.setEnabled(true);
-		} else {
-			btnStats.setEnabled(false);
-		}
-		panelCuerpo.add(btnStats);
-
-		// Refrescamos la visual
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
-
-	/**
-	 * Carga el PanelStock dentro del cuerpo
-	 */
-	private void abrirPanelStock() {
-		// 1. Limpiamos el panel actual
-		panelCuerpo.removeAll();
-
-		// 2. Instanciamos el Panel de Stock
-		// Nota: PanelStock no necesita usuarioLogueado, solo la empresa
-		PanelAltaStock panelStock = new PanelAltaStock(empresa);
-		panelStock.setBounds(0, 0, 784, 501);
-
-		// 3. Conectamos el botón "Volver" del panel con el método mostrarMenu()
-		panelStock.btnVolver.addActionListener(e -> abrirMenuStock());
-
-		// 4. Agregamos y refrescamos
-		panelCuerpo.add(panelStock);
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
-
-	// En interfaz/MainForm.java
-
-	// Hacé este método PÚBLICO para que los paneles hijos lo puedan llamar
-	public void abrirPanelStockConCodigo(String codigo) {
-		panelCuerpo.removeAll();
-
-		PanelAltaStock panelStock = new PanelAltaStock(empresa);
-		panelStock.setBounds(0, 0, 784, 501);
-
-		// --- ESTO ES LO NUEVO ---
-		panelStock.setCodigoPredefinido(codigo);
-		// ------------------------
-
-		// Conectamos el botón volver (usando tu lógica de navegación)
-		panelStock.btnVolver.addActionListener(e -> mostrarMenu()); // O abrirMenuStock()
-
-		panelCuerpo.add(panelStock);
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
-
-	/**
-	 * Carga el PanelVenta dentro del cuerpo
-	 */
-	// En interfaz/MainForm.java -> método abrirPanelVenta()
-
-	private void abrirPanelVenta() {
-		panelCuerpo.removeAll();
-
 		PanelVenta panelVenta = new PanelVenta(empresa, usuarioLogueado);
 		panelVenta.setBounds(0, 0, 784, 501);
-
-		// --- LÓGICA DEL BOTÓN VOLVER ---
 		panelVenta.btnVolver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
-				// 1. Guardamos el borrador antes de irnos
 				panelVenta.guardarSalida();
+				mostrarMenuPrincipal();
 
-				// 2. Volvemos al menú
-				mostrarMenu();
 			}
+
 		});
 
-		panelCuerpo.add(panelVenta);
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
 
-	private void abrirPanelCargaStock() {
+
+		panelCuerpo.add(panelVenta);
+
+		panelCuerpo.revalidate();
+
+		panelCuerpo.repaint();
+
+	}
+    
+    private void abrirPanelCargaStock() {
 		panelCuerpo.removeAll();
 
 		PanelCargaStock panelCarga = new PanelCargaStock(empresa);
 		panelCarga.setBounds(0, 0, 784, 501);
 
 		// Conectar botón Volver
-		panelCarga.btnVolver.addActionListener(e -> abrirMenuStock());
+		panelCarga.btnVolver.addActionListener(e -> abrirSubmenuStock());
 		panelCuerpo.add(panelCarga);
 		panelCuerpo.revalidate();
 		panelCuerpo.repaint();
 	}
 
-	private void abrirMenuStock() {
-		panelCuerpo.removeAll();
+    private void cerrarSesion() {
+        int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro desea salir?", "Cerrar Sesión", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            dispose();
+            // new Login(empresa).setVisible(true);
+        }
+    }
 
-		PanelGestionStock panelMenuStock = new PanelGestionStock(empresa);
-		panelMenuStock.setBounds(0, 0, 784, 501);
+    // --- UTILIDADES VISUALES ---
 
-		// --- CONECTAMOS LOS CABLES (LISTENERS) ---
+    private void refrescarPanel() {
+        panelCuerpo.revalidate();
+        panelCuerpo.repaint();
+    }
 
-		// Botón VOLVER -> Va al menú principal
-		panelMenuStock.btnVolver.addActionListener(e -> mostrarMenu());
+    private JButton crearBotonMenu(String texto, int x, int y) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBounds(x, y, 200, 100);
+        btn.setFocusPainted(false);
+        return btn;
+    }
 
-		// Botón ALTA -> Abre el PanelStock (Crear)
-		panelMenuStock.btnAltaProducto.addActionListener(e -> abrirPanelStock());
-
-		// Botón REPOSICIÓN -> Abre el PanelCargaStock (Sumar)
-		panelMenuStock.btnReposicion.addActionListener(e -> abrirPanelCargaStock());
-
-		panelCuerpo.add(panelMenuStock);
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
-
-	private void cerrarSesion() {
-		this.dispose();
-		// Abrimos Login de nuevo
-		LoginWindow login = new LoginWindow(empresa);
-		login.setVisible(true);
-	}
+    private void deshabilitarBoton(JButton btn) {
+        btn.setEnabled(false);
+        btn.setToolTipText("No tienes permisos para acceder a esta sección");
+    }
 }
