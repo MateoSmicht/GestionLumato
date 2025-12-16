@@ -123,6 +123,7 @@ public class PanelGestionStock extends JPanel {
         });
         add(btnConsulta);
     }
+    
 
     // Método auxiliar para dar estilo a los botones
     private void estilizarBoton(JButton btn, Color bg, Color fg) {

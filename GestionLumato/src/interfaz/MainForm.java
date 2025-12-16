@@ -155,44 +155,7 @@ public class MainForm extends JFrame {
         refrescarPanel();
     }
     
-    /**
-     * PANTALLA 4: CONSULTA / REPOSICIÓN (Pantalla completa)
-     */
-    private void abrirPanelConsulta() {
-        panelCuerpo.removeAll();
-        
-        // Aquí usamos el PanelConsultaStock, pero necesitamos agregarle un botón de volver
-        // Como PanelConsultaStock es BorderLayout, lo envolvemos o modificamos.
-        // Opción rápida: Lo metemos directo y asumimos que usará el menú del sistema o agregamos un botón flotante.
-        
-        PanelConsultaStock panelConsulta = new PanelConsultaStock(empresa);
-        
-        // TRUCO: Agregamos un botón "Volver" al panel de filtros del PanelConsulta
-        // (Esto requiere que PanelConsultaStock tenga un método para agregar componentes externos 
-        // o modificamos la clase, pero por ahora lo dejamos simple).
-        
-        // Para que se vea bien en pantalla completa
-        panelConsulta.setBounds(0, 0, 784, 511);
-        
-        // Creamos un contenedor simple para agregarle un botón de "Volver al Menú Stock" arriba
-        JPanel contenedor = new JPanel(new java.awt.BorderLayout());
-        contenedor.setBounds(0, 0, 784, 511);
-        
-        JButton btnVolverAtras = new JButton("<< Volver al Menú de Gestión");
-        btnVolverAtras.setBackground(new Color(44, 62, 80));
-        btnVolverAtras.setForeground(Color.WHITE);
-        btnVolverAtras.addActionListener(e -> abrirSubmenuStock());
-        
-        contenedor.add(btnVolverAtras, java.awt.BorderLayout.NORTH);
-        contenedor.add(panelConsulta, java.awt.BorderLayout.CENTER);
-        
-        panelCuerpo.add(contenedor);
-        refrescarPanel();
-    }
-
-    /**
-     * ESPECIAL: Ir directo a crear producto desde la Venta (Cuando no existe código)
-     */
+    
     public void abrirPanelStockConCodigo(String codigo) {
         panelCuerpo.removeAll();
 
