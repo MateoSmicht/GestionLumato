@@ -1,162 +1,161 @@
 package interfaz;
 
-
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.File;
 
 import modelo.Empresa;
+import modelo.Producto;
 import controlador.ControladorStock;
 
 public class PanelGestionStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private ControladorStock controlador;
-    // --- BOTONES PÚBLICOS (Para que el MainForm les asigne acciones de navegación) ---
+    
+    // --- BOTONES PÚBLICOS ---
     public JButton btnAltaProducto;
     public JButton btnReposicion;
     public JButton btnVolver;
 
-    // --- COLORES FLAT UI ---
+    // --- COLORES ---
     private final Color COLOR_FONDO = new Color(245, 246, 250);
     private final Color COLOR_HEADER = new Color(44, 62, 80);
     
-    // Colores de Botones
-    private final Color COL_AZUL    = new Color(52, 152, 219); // Alta
-    private final Color COL_VERDE   = new Color(39, 174, 96);  // Reposición
-    private final Color COL_NARANJA = new Color(230, 126, 34); // Unificar
-    private final Color COL_AMARILLO= new Color(241, 196, 15); // Categoría
-    private final Color COL_VIOLETA = new Color(142, 68, 173); // Consulta
+    private final Color COL_AZUL    = new Color(52, 152, 219); 
+    private final Color COL_VERDE   = new Color(39, 174, 96);  
+    private final Color COL_NARANJA = new Color(230, 126, 34); 
+    private final Color COL_AMARILLO= new Color(241, 196, 15); 
+    private final Color COL_VIOLETA = new Color(142, 68, 173); 
 
     public PanelGestionStock(Empresa empresa) {
-    	this.controlador = new ControladorStock(empresa); 
-        setLayout(null);
+        this.controlador = new ControladorStock(empresa); 
+        
+        // 1. LAYOUT PRINCIPAL: BorderLayout
+        // Esto asegura que el Header se quede arriba y el resto ocupe TODO el espacio
+        setLayout(new BorderLayout());
         setBackground(COLOR_FONDO);
-        setBounds(0, 0, 784, 500);
 
         // =========================================================
-        // 1. HEADER
+        // A. HEADER (FIJO ARRIBA)
         // =========================================================
-        JPanel panelHeader = new JPanel(null);
+        JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_HEADER);
-        panelHeader.setBounds(0, 0, 784, 80);
-        add(panelHeader);
+        panelHeader.setPreferredSize(new Dimension(0, 80)); // Alto fijo
+        panelHeader.setBorder(new EmptyBorder(0, 30, 0, 30));
+        add(panelHeader, BorderLayout.NORTH);
 
         JLabel lblTitulo = new JLabel("MENÚ DE STOCK");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setBounds(30, 20, 300, 40);
-        panelHeader.add(lblTitulo);
+        panelHeader.add(lblTitulo, BorderLayout.WEST);
 
-        // Botón Volver (Arriba a la derecha)
         btnVolver = new JButton("Volver al Inicio");
-        btnVolver.setBounds(600, 25, 150, 35);
+        btnVolver.setPreferredSize(new Dimension(150, 40));
         estilizarBoton(btnVolver, new Color(149, 165, 166), Color.WHITE);
-        panelHeader.add(btnVolver);
+        
+        JPanel panelBtnVolver = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 20));
+        panelBtnVolver.setOpaque(false);
+        panelBtnVolver.add(btnVolver);
+        panelHeader.add(panelBtnVolver, BorderLayout.EAST);
 
         // =========================================================
-        // 2. GRID DE BOTONES
+        // B. GRID DE BOTONES (ELÁSTICO)
         // =========================================================
+        JPanel panelGrid = new JPanel(new GridBagLayout()); // <--- LA CLAVE
+        panelGrid.setBackground(COLOR_FONDO);
+        panelGrid.setBorder(new EmptyBorder(20, 20, 20, 20)); // Margen externo
+        add(panelGrid, BorderLayout.CENTER);
+
+        // --- FILA 1 ---
+        btnAltaProducto = crearBoton("ALTA DE PRODUCTO", "Crear artículos nuevos", COL_AZUL, true);
+        btnReposicion = crearBoton("REPOSICIÓN", "Cargar mercadería existente", COL_VERDE, true);
         
-        // Coordenadas base
-        int margenIzq = 40;
-        int anchoBtnMedio = 340; // Para botones que van de a 2
-        int anchoBtnFull = 700;  // Para botones que ocupan todo
-        int gap = 20;            // Espacio entre botones
-        int anchoConsulta = 340;
-        int anchoRapida = 170;
-        int anchoImportar = 170;
+        // (x, y, ancho, alto) -> El ancho es relativo en la grilla
+        // Fila 1 ocupa 2 espacios cada botón (para alinearse con la fila 3 que tiene 3 botones)
+        agregarBoton(panelGrid, btnAltaProducto, 0, 0, 3, 1); 
+        agregarBoton(panelGrid, btnReposicion,   3, 0, 3, 1);
 
-        // --- FILA 1: ACCIONES PRINCIPALES (y = 100) ---
-        int fila1 = 100;
-        int altoFila1 = 100;
+        // --- FILA 2 ---
+        JButton btnUnificar = crearBoton("FUSIONAR DUPLICADOS", "Corregir códigos", COL_NARANJA, false);
+        btnUnificar.addActionListener(e -> new DialogoUnificar((JFrame)SwingUtilities.getWindowAncestor(this), empresa).setVisible(true));
         
-        int fila3 = 330;
-        int altoFila3 = 90;
+        JButton btnCategoria = crearBoton("GESTIONAR CATEGORÍAS", "Familias y Rubros", COL_AMARILLO, false);
+        btnCategoria.setForeground(new Color(44, 62, 80));
+        btnCategoria.addActionListener(e -> new DialogoNuevaCategoria((JFrame)SwingUtilities.getWindowAncestor(this), empresa).setVisible(true));
 
-        // 1. ALTA DE PRODUCTO (Izquierda)
-        btnAltaProducto = new JButton("<html><center><h2>ALTA DE PRODUCTO</h2><br>Crear artículos nuevos</center></html>");
-        btnAltaProducto.setBounds(margenIzq, fila1, anchoBtnMedio, altoFila1);
-        estilizarBoton(btnAltaProducto, COL_AZUL, Color.WHITE);
-        add(btnAltaProducto);
+        agregarBoton(panelGrid, btnUnificar,  0, 1, 3, 1);
+        agregarBoton(panelGrid, btnCategoria, 3, 1, 3, 1);
 
-        // 2. REPOSICIÓN (Derecha)
-        btnReposicion = new JButton("<html><center><h2>REPOSICIÓN</h2><br>Cargar mercadería existente</center></html>");
-        btnReposicion.setBounds(margenIzq + anchoBtnMedio + gap, fila1, anchoBtnMedio, altoFila1);
-        estilizarBoton(btnReposicion, COL_VERDE, Color.WHITE);
-        add(btnReposicion);
-
-
-        // --- FILA 2: HERRAMIENTAS DE GESTIÓN (y = 220) ---
-        int fila2 = 220;
-        int altoFila2 = 90;
-
-        // 3. UNIFICAR CÓDIGOS (Izquierda)
-        JButton btnUnificar = new JButton("<html><center><h3>FUSIONAR DUPLICADOS</h3><br>Corregir códigos dobles</center></html>");
-        btnUnificar.setBounds(margenIzq, fila2, anchoBtnMedio, altoFila2);
-        estilizarBoton(btnUnificar, COL_NARANJA, Color.WHITE);
-        btnUnificar.addActionListener(e -> {
-            JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-            DialogoUnificar dialog = new DialogoUnificar(parent, empresa);
-            dialog.setVisible(true);
-        });
-        add(btnUnificar);
-
-        // 4. NUEVA CATEGORÍA (Derecha)
-        JButton btnCategoria = new JButton("<html><center><h3>GESTIONAR CATEGORÍAS</h3><br>Crear y editar familias</center></html>");
-        btnCategoria.setBounds(margenIzq + anchoBtnMedio + gap, fila2, anchoBtnMedio, altoFila2);
-        estilizarBoton(btnCategoria, COL_AMARILLO, Color.WHITE);
-        btnCategoria.setForeground(new Color(44, 62, 80)); // Texto oscuro para el amarillo
-        btnCategoria.addActionListener(e -> {
-            JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-            DialogoNuevaCategoria dialog = new DialogoNuevaCategoria(parent, empresa);
-            dialog.setVisible(true);
-        });
-        add(btnCategoria);
-
-
-     // 5. CONSULTAR STOCK (Buscador)
-        JButton btnConsulta = new JButton("<html><center><h2>CONSULTA</h2><br>Buscador de precios</center></html>");
-        btnConsulta.setBounds(margenIzq, fila3, anchoConsulta, altoFila3);
-        estilizarBoton(btnConsulta, COL_VIOLETA, Color.WHITE);
+        // --- FILA 3 (3 Botones) ---
+        JButton btnConsulta = crearBoton("CONSULTA", "Buscador", COL_VIOLETA, true);
         btnConsulta.addActionListener(e -> {
-            JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Buscador de Stock", true);
-            dialog.setSize(950, 600); 
-            dialog.setLocationRelativeTo(null);
-            dialog.add(new PanelConsultaStock(empresa)); 
-            dialog.setVisible(true);
+            JDialog d = new JDialog((Frame)SwingUtilities.getWindowAncestor(this), "Buscador", true);
+            d.setSize(1000, 700); d.setLocationRelativeTo(null);
+            d.add(new PanelConsultaStock(empresa)); d.setVisible(true);
         });
-        add(btnConsulta);
-        
-        
-        
-        // 7. IMPORTAR EXCEL
-        JButton btnImportar = new JButton("<html><center><h3>IMPORTAR</h3><br>Desde Excel</center></html>");
-        // Lo ubicamos a la derecha de Carga Rápida
-        btnImportar.setBounds(margenIzq + anchoConsulta + gap + anchoRapida + gap, fila3, anchoImportar, altoFila3);
-        estilizarBoton(btnImportar, COL_AZUL, Color.WHITE);
-        
-        btnImportar.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Seleccionar archivo CSV");
-            int userSelection = fileChooser.showOpenDialog(this);
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                // Aquí usamos el controlador (recuerda que PanelGestionStock ya tiene 'controlador')
-                String reporte = controlador.importarProductosDesdeCSV(fileChooser.getSelectedFile());
-                JOptionPane.showMessageDialog(this, reporte);
+
+        JButton btnEditar = crearBoton("EDITAR", "Producto", COL_NARANJA, false);
+        btnEditar.addActionListener(e -> {
+            String cod = JOptionPane.showInputDialog(this, "Código a editar:");
+            if(cod != null && !cod.isEmpty()) {
+                Producto p = empresa.buscarProducto(cod);
+                if(p!=null) new DialogoEditarProducto((JFrame)SwingUtilities.getWindowAncestor(this), empresa, p, null).setVisible(true);
+                else JOptionPane.showMessageDialog(this, "No encontrado");
             }
         });
-        add(btnImportar);
-    }
-    
 
-    // Método auxiliar para dar estilo a los botones
+        JButton btnImportar = crearBoton("IMPORTAR", "Excel / CSV", COL_AZUL, false);
+        btnImportar.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                JOptionPane.showMessageDialog(this, controlador.importarProductosDesdeCSV(fc.getSelectedFile()));
+            }
+        });
+
+        // Aquí usamos ancho 2 para cada botón, total 6 columnas
+        agregarBoton(panelGrid, btnConsulta, 0, 2, 2, 1);
+        agregarBoton(panelGrid, btnEditar,   2, 2, 2, 1);
+        agregarBoton(panelGrid, btnImportar, 4, 2, 2, 1);
+    }
+
+    // --- MAGIA DE GRIDBAGLAYOUT ---
+    // Este método es el que obliga a los botones a crecer
+    private void agregarBoton(JPanel panel, JComponent componente, int x, int y, int ancho, int alto) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.gridwidth = ancho;
+        gbc.gridheight = alto;
+        
+        gbc.fill = GridBagConstraints.BOTH; // ESTO HACE QUE CREZCA EN ANCHO Y ALTO
+        gbc.weightx = 1.0; // ESTO PIDE "DAME TODO EL ESPACIO HORIZONTAL SOBRANTE"
+        gbc.weighty = 1.0; // ESTO PIDE "DAME TODO EL ESPACIO VERTICAL SOBRANTE"
+        
+        gbc.insets = new Insets(10, 10, 10, 10); // Márgenes entre botones (gap)
+        
+        panel.add(componente, gbc);
+    }
+
+    // --- ESTILOS ---
+
+    private JButton crearBoton(String titulo, String subtitulo, Color bg, boolean grande) {
+        String html = grande 
+            ? "<html><center><h2>" + titulo + "</h2><font size=5>" + subtitulo + "</font></center></html>"
+            : "<html><center><h3>" + titulo + "</h3>" + subtitulo + "</center></html>";
+            
+        JButton btn = new JButton(html);
+        estilizarBoton(btn, bg, Color.WHITE);
+        return btn;
+    }
+
     private void estilizarBoton(JButton btn, Color bg, Color fg) {
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false); // Estilo Flat total
+        btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 }

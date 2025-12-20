@@ -147,11 +147,13 @@ public class PanelPrecios extends JPanel {
     // --- GETTERS Y SETTERS (Para sacar y meter datos) ---
 
     public void setValores(BigDecimal costo, BigDecimal ganancia, BigDecimal iva) {
-        txtCosto.setText(costo.toString());
-        txtGanancia.setText(ganancia.multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString());
+txtCosto.setText(costo != null ? costo.toString() : "0");
         
-        String ivaStr = iva.multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString();
-        if(ivaStr.equals("21")) ivaStr = "21.0";
+        // Delegamos el formato al controlador
+        txtGanancia.setText(controlador.formatearGananciaParaVista(ganancia));
+        
+        // Delegamos el formato del IVA
+        String ivaStr = controlador.formatearIVAParaVista(iva);
         cmbIVA.setSelectedItem(ivaStr);
         
         actualizarCalculos();
@@ -181,4 +183,6 @@ public class PanelPrecios extends JPanel {
             BorderFactory.createEmptyBorder(5,5,5,5)));
         add(t); return t;
     }
+    
+   
 }

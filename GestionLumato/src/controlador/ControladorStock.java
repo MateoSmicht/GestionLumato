@@ -204,6 +204,27 @@ public class ControladorStock {
         return candidato;
     }
     /**
+     * Modifica un producto existente. 
+     * Si el código cambia, elimina el anterior y crea uno nuevo.
+     */
+    public void modificarProductoCompleto(String codigoOriginal, String nuevoCodigo, String descripcion, 
+                                          Categoria categoria, String costo, String ganancia, String iva, 
+                                          String unidad, String factor, String stock) throws Exception {
+        
+        // 1. Si cambió el código, validamos que el nuevo no exista ya (para no pisar otro producto)
+        if (!codigoOriginal.equals(nuevoCodigo)) {
+            if (empresa.elProductoYaEstaCargado(nuevoCodigo)) {
+                throw new Exception("El nuevo código ya pertenece a otro producto.");
+            }
+            // Eliminamos el viejo (porque la Key del Map cambió)
+            empresa.eliminarProducto(codigoOriginal);
+        }
+
+        // 2. Reutilizamos el método guardar (que hace Upsert: crea o actualiza)
+        guardarProducto(nuevoCodigo, descripcion, categoria, costo, ganancia, iva, unidad, factor, stock);
+    }
+    
+    /**
      * Procesa un archivo CSV y carga los productos.
      * @param archivo El archivo seleccionado por el usuario.
      * @return Un mensaje con el resumen de la operación.
@@ -280,6 +301,30 @@ public class ControladorStock {
         } catch (Exception e) {
             return "Error crítico al abrir archivo: " + e.getMessage();
         }   
+    }
+    
+
+    /**
+     * Convierte el decimal (0.30) a String para la vista ("30")
+     * LOGICA PURA: La vista no debe saber multiplicar.
+     */
+    public String formatearGananciaParaVista(BigDecimal ganancia) {
+        if (ganancia == null) return "0";
+        return ganancia.multiply(new BigDecimal(100))
+                       .stripTrailingZeros()
+                       .toPlainString();
+    }
+
+    /**
+     * Convierte el decimal (0.21) a String para el Combo ("21.0")
+     */
+    public String formatearIVAParaVista(BigDecimal iva) {
+        if (iva == null) return "0.0";
+        String texto = iva.multiply(new BigDecimal(100))
+                          .stripTrailingZeros()
+                          .toPlainString();
+        if (texto.equals("21")) return "21.0"; // Ajuste estético
+        return texto;
     }
     
     }

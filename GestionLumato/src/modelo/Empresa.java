@@ -230,6 +230,10 @@ public class Empresa {
         producto.getCodigosSecundarios().remove(codigoABorrar);
         stock.remove(codigoABorrar);
     }
+    
+    public void eliminarProducto(String codigo) {
+    	stock.remove(codigo);
+    }
     public boolean validarNumero(String texto) {
         // 1. Chequeamos si es null O si esta vacío O si NO son digitos
         if (texto == null || texto.trim().isEmpty() || !texto.matches("\\d+")) {

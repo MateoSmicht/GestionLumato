@@ -1,9 +1,10 @@
 package interfaz;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
@@ -31,30 +32,36 @@ public class MainForm extends JFrame {
         // Configuración de la Ventana Principal
         setTitle("Sistema de Gestión - " + empresa.getNombre());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 800, 600);
-        setLocationRelativeTo(null); // Centrar en pantalla
+        
+        // 1. TAMAÑO DEFINITIVO Y BLOQUEO
+        setSize(1000, 680); 
+        setResizable(false); // Bloqueamos para que el diseño no se rompa
+        setLocationRelativeTo(null); // Centrado en monitor
 
+        // 2. LAYOUT PRINCIPAL (BorderLayout)
+        
         contentPane = new JPanel();
-        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        contentPane.setBorder(new EmptyBorder(0, 0, 0, 0));
+        contentPane.setLayout(new BorderLayout()); 
         setContentPane(contentPane);
-        contentPane.setLayout(null);
 
         // =============================================================
-        // 1. CABECERA (Fija arriba)
+        // A. CABECERA (NORTE)
         // =============================================================
         panelCabecera = new JPanel();
         panelCabecera.setBackground(new Color(230, 230, 250)); // Lavanda suave
-        panelCabecera.setBounds(0, 0, 784, 50);
-        panelCabecera.setLayout(null);
-        contentPane.add(panelCabecera);
+        panelCabecera.setPreferredSize(new Dimension(1000, 60)); // Alto fijo
+        panelCabecera.setLayout(null); // Layout null solo para la cabecera simple
+        contentPane.add(panelCabecera, BorderLayout.NORTH);
 
         JLabel lblInfoUser = new JLabel("Operador: " + usuario.getNombreCompleto());
-        lblInfoUser.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblInfoUser.setBounds(20, 11, 400, 28);
+        lblInfoUser.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblInfoUser.setBounds(30, 15, 400, 30);
         panelCabecera.add(lblInfoUser);
 
         JButton btnLogout = new JButton("Cerrar Sesión");
-        btnLogout.setBounds(630, 12, 120, 25);
+        // Ajustamos la posición X para la nueva resolución (1000 - 150 aprox)
+        btnLogout.setBounds(850, 15, 120, 30); 
         btnLogout.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         btnLogout.setBackground(new Color(192, 57, 43));
         btnLogout.setForeground(Color.WHITE);
@@ -63,12 +70,13 @@ public class MainForm extends JFrame {
         panelCabecera.add(btnLogout);
 
         // =============================================================
-        // 2. CUERPO (Dinámico)
+        // B. CUERPO (CENTRO)
         // =============================================================
         panelCuerpo = new JPanel();
-        panelCuerpo.setBounds(0, 50, 784, 511);
-        panelCuerpo.setLayout(null); 
-        contentPane.add(panelCuerpo);
+        // IMPORTANTE: Usamos BorderLayout aquí también.
+        // Esto permite que cuando agreguemos 'PanelGestionStock', se estire al 100%.
+        panelCuerpo.setLayout(new BorderLayout()); 
+        contentPane.add(panelCuerpo, BorderLayout.CENTER);
 
         // Al iniciar, mostramos el Dashboard
         mostrarMenuPrincipal();
@@ -84,31 +92,48 @@ public class MainForm extends JFrame {
     public void mostrarMenuPrincipal() {
         panelCuerpo.removeAll();
 
+        // Creamos un panel contenedor para los botones del menú
+        // Usamos null layout aquí para ubicar los 3 botones manualmente en el centro
+        JPanel panelMenu = new JPanel();
+        panelMenu.setLayout(null);
+        panelMenu.setBackground(new Color(245, 246, 250)); // Color de fondo gris claro
+
+        // Coordenadas calculadas para ancho 1000px
+        // Ancho Botón: 220px | Espacio: 60px | Total ancho bloque: ~800px
+        // Inicio X aprox: 110
+        int yBtn = 150; // Altura vertical
+        int wBtn = 220;
+        int hBtn = 120;
+        int gap = 60;
+        int xInicio = 110;
+
         // Botón 1: PUNTO DE VENTA
-        JButton btnVenta = crearBotonMenu("PUNTO DE VENTA", 50, 50);
+        JButton btnVenta = crearBotonMenu("PUNTO DE VENTA", xInicio, yBtn, wBtn, hBtn);
         if (usuarioLogueado.puede(Funcion.REGISTRAR_VENTA)) {
             btnVenta.addActionListener(e -> abrirPanelVenta());
         } else {
             deshabilitarBoton(btnVenta);
         }
-        panelCuerpo.add(btnVenta);
+        panelMenu.add(btnVenta);
 
-        // Botón 2: GESTIÓN DE STOCK (Lleva al submenú de colores)
-        JButton btnStock = crearBotonMenu("GESTIÓN STOCK", 280, 50);
+        // Botón 2: GESTIÓN DE STOCK
+        JButton btnStock = crearBotonMenu("GESTIÓN STOCK", xInicio + wBtn + gap, yBtn, wBtn, hBtn);
         if (usuarioLogueado.puede(Funcion.CARGAR_PRODUCTO)) {
             btnStock.addActionListener(e -> abrirSubmenuStock());
         } else {
             deshabilitarBoton(btnStock);
         }
-        panelCuerpo.add(btnStock);
+        panelMenu.add(btnStock);
 
         // Botón 3: ESTADÍSTICAS
-        JButton btnStats = crearBotonMenu("ESTADÍSTICAS", 510, 50);
+        JButton btnStats = crearBotonMenu("ESTADÍSTICAS", xInicio + (wBtn + gap) * 2, yBtn, wBtn, hBtn);
         if (!usuarioLogueado.puede(Funcion.VER_ESTADISTICAS)) {
             deshabilitarBoton(btnStats);
         }
-        panelCuerpo.add(btnStats);
+        panelMenu.add(btnStats);
 
+        // Agregamos el panelMenu al centro del cuerpo
+        panelCuerpo.add(panelMenu, BorderLayout.CENTER);
         refrescarPanel();
     }
 
@@ -120,100 +145,77 @@ public class MainForm extends JFrame {
 
         // Instanciamos el panel intermedio
         PanelGestionStock panelGestion = new PanelGestionStock(empresa);
-        panelGestion.setBounds(0, 0, 784, 511);
+        
+        // NO HACEMOS setBounds AQUÍ.
+        // Como panelCuerpo tiene BorderLayout, al hacer add(), panelGestion ocupa todo.
 
         // --- CONEXIONES DE NAVEGACIÓN ---
-
-        // 1. Botón "Volver al Inicio" (Header del panel)
         panelGestion.btnVolver.addActionListener(e -> mostrarMenuPrincipal());
-
-        // 2. Botón "Alta de Producto" (Azul) -> Va al formulario
         panelGestion.btnAltaProducto.addActionListener(e -> abrirPanelAltaStock());
-
-        // 3. Botón "Reposición" (Verde) -> Va al buscador/tabla en modo pantalla completa
         panelGestion.btnReposicion.addActionListener(e -> abrirPanelCargaStock());
 
-        panelCuerpo.add(panelGestion);
+        panelCuerpo.add(panelGestion, BorderLayout.CENTER);
         refrescarPanel();
     }
 
     /**
-     * PANTALLA 3: FORMULARIO ALTA (Reutilizando la lógica DRY)
+     * PANTALLA 3: FORMULARIO ALTA
      */
     private void abrirPanelAltaStock() {
         panelCuerpo.removeAll();
 
-        // AHORA PASAMOS LA ACCIÓN DIRECTAMENTE EN EL PARÉNTESIS
-        // (Empresa, Acción de Volver)
         PanelAltaStock panelAlta = new PanelAltaStock(empresa, () -> abrirSubmenuStock());
+        // panelAlta debería adaptarse también si usa layouts correctos, si no, se verá arriba a la izq.
+        // Asumiremos que PanelAltaStock maneja su layout o usaremos un wrapper si es necesario.
+        panelCuerpo.add(panelAlta, BorderLayout.CENTER);
         
-        panelAlta.setBounds(0, 0, 784, 511);
-        
-        panelCuerpo.add(panelAlta);
-        panelCuerpo.revalidate();
-        panelCuerpo.repaint();
+        refrescarPanel();
     }
-    
     
     public void abrirPanelStockConCodigo(String codigo) {
         panelCuerpo.removeAll();
 
-        // Usamos el Formulario Maestro directamente para mayor flexibilidad
         PanelFormularioProducto formulario = new PanelFormularioProducto(
             empresa, 
             codigo, 
-            () -> abrirPanelVenta(), // Al guardar -> Volver a vender
-            () -> abrirPanelVenta()  // Al cancelar -> Volver a vender
+            () -> abrirPanelVenta(), 
+            () -> abrirPanelVenta()  
         );
         
-        formulario.setBounds(0, 0, 784, 511);
-        panelCuerpo.add(formulario);
+        panelCuerpo.add(formulario, BorderLayout.CENTER);
         refrescarPanel();
     }
     
-    // --- STUBS (Marcadores de posición) ---
+    // --- PANTALLAS SECUNDARIAS ---
 
-   
     private void abrirPanelVenta() {
-		panelCuerpo.removeAll();
-		PanelVenta panelVenta = new PanelVenta(empresa, usuarioLogueado);
-		panelVenta.setBounds(0, 0, 784, 501);
-		panelVenta.btnVolver.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				panelVenta.guardarSalida();
-				mostrarMenuPrincipal();
+        panelCuerpo.removeAll();
+        PanelVenta panelVenta = new PanelVenta(empresa, usuarioLogueado);
+        
+        panelVenta.btnVolver.addActionListener(e -> {
+            panelVenta.guardarSalida();
+            mostrarMenuPrincipal();
+        });
 
-			}
-
-		});
-
-
-
-		panelCuerpo.add(panelVenta);
-
-		panelCuerpo.revalidate();
-
-		panelCuerpo.repaint();
-
-	}
+        panelCuerpo.add(panelVenta, BorderLayout.CENTER);
+        refrescarPanel();
+    }
     
     private void abrirPanelCargaStock() {
-		panelCuerpo.removeAll();
+        panelCuerpo.removeAll();
 
-		PanelCargaStock panelCarga = new PanelCargaStock(empresa);
-		panelCarga.setBounds(0, 0, 784, 501);
-
-		// Conectar botón Volver
-		panelCarga.btnVolver.addActionListener(e -> abrirSubmenuStock());
-		panelCuerpo.add(panelCarga);
-		panelCuerpo.revalidate();
-		panelCuerpo.repaint();
-	}
+        PanelCargaStock panelCarga = new PanelCargaStock(empresa);
+        panelCarga.btnVolver.addActionListener(e -> abrirSubmenuStock());
+        
+        panelCuerpo.add(panelCarga, BorderLayout.CENTER);
+        refrescarPanel();
+    }
 
     private void cerrarSesion() {
         int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro desea salir?", "Cerrar Sesión", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             dispose();
+            // Aquí llamarías a tu Login nuevamente
             // new Login(empresa).setVisible(true);
         }
     }
@@ -225,11 +227,12 @@ public class MainForm extends JFrame {
         panelCuerpo.repaint();
     }
 
-    private JButton crearBotonMenu(String texto, int x, int y) {
+    private JButton crearBotonMenu(String texto, int x, int y, int w, int h) {
         JButton btn = new JButton(texto);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setBounds(x, y, 200, 100);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Letra más grande
+        btn.setBounds(x, y, w, h);
         btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 

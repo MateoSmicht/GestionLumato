@@ -14,18 +14,14 @@ public class PanelFormularioProducto extends JPanel {
     private static final long serialVersionUID = 1L;
     
     private ControladorStock controlador;
-    private Empresa empresa;
-
-    private Runnable onGuardarExitoso;
-    private Runnable onCancelar;
-
-    // Componentes Generales
+    
+    // Componentes
     private JComboBox<Object> cmbCatMadre; 
     private JComboBox<Object> cmbSubCat;   
     private JTextField txtCodigo;
     private JTextField txtDescripcion;
     
-    // COMPONENTE REUTILIZABLE DE PRECIOS (¡AQUÍ ESTÁ LA MAGIA!)
+    // COMPONENTE REUTILIZABLE DE PRECIOS
     private PanelPrecios panelPrecios;
 
     // Componentes Logística
@@ -33,109 +29,122 @@ public class PanelFormularioProducto extends JPanel {
     private JComboBox<String> cmbUnidad;
     private JTextField txtFactor;
 
+    private Runnable onGuardarExitoso;
+    private Runnable onCancelar;
+    private Empresa empresa;
+
     public PanelFormularioProducto(Empresa empresa, String codigoPredefinido, Runnable onGuardar, Runnable onCancelar) {
-        this.empresa = empresa;
         this.controlador = new ControladorStock(empresa);
         this.onGuardarExitoso = onGuardar;
         this.onCancelar = onCancelar;
 
         setLayout(null);
         setBackground(new Color(245, 246, 250));
-        setSize(784, 600); // Un poco más alto para que entre todo cómodo
+        // AJUSTE HD: Tamaño completo
+        setBounds(0, 0, 1000, 680); 
 
-        // --- HEADER ---
+        // ============================================================
+        // HEADER (Ancho 1000px)
+        // ============================================================
         JPanel panelHeader = new JPanel(null);
         panelHeader.setBackground(new Color(44, 62, 80));
-        panelHeader.setBounds(0, 0, 784, 60);
+        panelHeader.setBounds(0, 0, 1000, 60);
         add(panelHeader);
 
         JLabel lblTitulo = new JLabel("NUEVO PRODUCTO");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setBounds(20, 15, 300, 30);
+        lblTitulo.setBounds(40, 15, 300, 30);
         panelHeader.add(lblTitulo);
         
         JButton btnCerrar = new JButton("Cancelar (Esc)");
-        btnCerrar.setBounds(600, 15, 150, 30);
+        btnCerrar.setBounds(820, 15, 140, 30); // Pegado a la derecha
         estilizarBoton(btnCerrar, new Color(192, 57, 43), Color.WHITE);
         btnCerrar.addActionListener(e -> { if(onCancelar != null) onCancelar.run(); });
         panelHeader.add(btnCerrar);
 
         // ============================================================
-        // FILA 1: DATOS BÁSICOS
+        // FILA 1: DATOS BÁSICOS (Más anchos)
         // ============================================================
-        int fila1 = 80;
-        crearLabel("1. Código (Enter):", 20, fila1);
-        txtCodigo = crearInput(20, fila1 + 25, 200);
+        int fila1 = 90;
+        int margenIzq = 50; // Margen más amplio para que respire
+        
+        crearLabel("1. Código (Enter):", margenIzq, fila1);
+        txtCodigo = crearInput(margenIzq, fila1 + 25, 220); // Un poco más ancho
         txtCodigo.setText(codigoPredefinido);
 
-        crearLabel("2. Descripción (Enter):", 240, fila1);
-        txtDescripcion = crearInput(240, fila1 + 25, 500);
+        // La descripción ahora ocupa el resto del ancho disponible
+        crearLabel("2. Descripción (Enter):", 300, fila1);
+        txtDescripcion = crearInput(300, fila1 + 25, 630); // MUCHO más ancho
 
         // ============================================================
         // FILA 2: CATEGORÍAS
         // ============================================================
-        int fila2 = 150;
-        crearLabel("3. Rubro (Enter abre):", 20, fila2);
+        int fila2 = 170;
+        
+        crearLabel("3. Rubro (Enter abre):", margenIzq, fila2);
         cmbCatMadre = new JComboBox<>();
-        cmbCatMadre.setBounds(20, fila2 + 25, 220, 35);
+        cmbCatMadre.setBounds(margenIzq, fila2 + 25, 300, 35); // Combo más ancho
         add(cmbCatMadre);
 
-        crearLabel("4. Subcategoría (Enter):", 260, fila2);
+        crearLabel("4. Subcategoría (Enter):", 380, fila2);
         cmbSubCat = new JComboBox<>();
-        cmbSubCat.setBounds(260, fila2 + 25, 220, 35);
+        cmbSubCat.setBounds(380, fila2 + 25, 300, 35); // Combo más ancho
         cmbSubCat.setEnabled(false);
         add(cmbSubCat);
         
         cargarCategoriasMadre();
 
         // ============================================================
-        // FILA 3: PANEL DE PRECIOS (REUTILIZADO)
+        // FILA 3: PANEL DE PRECIOS (Ubicación)
         // ============================================================
-        int fila3 = 210;
+        int fila3 = 240;
         
-        // Instanciamos el panel pasándole el controlador
+        // Instanciamos el panel
         panelPrecios = new PanelPrecios(controlador);
-        // Lo ubicamos en el formulario (coordenadas relativas a este panel)
-        panelPrecios.setBounds(20, fila3, 500, 150); 
+        // Lo movemos un poco para que quede alineado con el margen izquierdo nuevo
+        panelPrecios.setBounds(margenIzq, fila3, 600, 150); 
         add(panelPrecios);
 
         // ============================================================
-        // FILA 4: LOGÍSTICA (Bajamos un poco la coordenada Y)
+        // FILA 4: LOGÍSTICA
         // ============================================================
-        int fila4 = 370;
-        crearLabel("7. Unidad:", 20, fila4);
+        int fila4 = 400; // Bajamos un poco más
+        
+        crearLabel("7. Unidad:", margenIzq, fila4);
         cmbUnidad = new JComboBox<>(new String[]{"UNI", "BULTO", "CAJA", "KG"});
-        cmbUnidad.setBounds(20, fila4 + 25, 100, 35);
+        cmbUnidad.setBounds(margenIzq, fila4 + 25, 120, 35);
         add(cmbUnidad);
         
-        crearLabel("8. Factor:", 140, fila4);
-        txtFactor = crearInput(140, fila4 + 25, 100);
+        crearLabel("8. Factor:", 200, fila4);
+        txtFactor = crearInput(200, fila4 + 25, 100);
         txtFactor.setText("1");
 
-        crearLabel("9. Stock Inicial:", 260, fila4);
-        txtStockInicial = crearInput(260, fila4 + 25, 100);
+        crearLabel("9. Stock Inicial:", 330, fila4);
+        txtStockInicial = crearInput(330, fila4 + 25, 120);
         txtStockInicial.setText("0");
 
-        // BOTÓN GUARDAR
+        // BOTÓN GUARDAR (Más grande y llamativo)
         JButton btnGuardar = new JButton("GUARDAR PRODUCTO (F12)");
-        btnGuardar.setBounds(20, 450, 300, 50);
+        btnGuardar.setBounds(margenIzq, 480, 350, 60); // Botón grande
         estilizarBoton(btnGuardar, new Color(39, 174, 96), Color.WHITE);
+        btnGuardar.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnGuardar.addActionListener(e -> guardar());
         add(btnGuardar);
 
         // ============================================================
-        // LÓGICA DE NAVEGACIÓN (CONECTANDO LOS CABLES)
+        // LÓGICA DE NAVEGACIÓN
         // ============================================================
         configurarNavegacionTeclado();
         configurarLogicaCategorias();
         
-        // Foco inicial
         SwingUtilities.invokeLater(() -> {
             if(txtCodigo.getText().isEmpty()) txtCodigo.requestFocus();
             else txtDescripcion.requestFocus();
         });
     }
+
+    // --- (EL RESTO DE LOS MÉTODOS SIGUE IGUAL, SOLO CAMBIÓ EL DISEÑO ARRIBA) ---
 
     private void configurarNavegacionTeclado() {
         // 1. CODIGO -> Enter -> DESCRIPCION
@@ -158,41 +167,33 @@ public class PanelFormularioProducto extends JPanel {
             }
         });
 
-        // 4. SUBCAT -> Enter -> AL PANEL DE PRECIOS (COSTO)
+        // 4. SUBCAT -> Enter -> PANEL PRECIOS
         cmbSubCat.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER && !cmbSubCat.isPopupVisible()) {
-                    // ¡AQUÍ SALTAMOS ADENTRO DEL PANEL HIJO!
                     panelPrecios.darFocoInicial();
                 }
             }
         });
 
-        // 5. SALIDA DEL PANEL DE PRECIOS -> UNIDAD
-        // Configuramos el "Callback" del panel hijo
-        panelPrecios.setOnEnterAlFinal(e -> {
-            cmbUnidad.requestFocus();
-        });
+        // 5. SALIDA DEL PANEL PRECIOS -> UNIDAD
+        panelPrecios.setOnEnterAlFinal(e -> cmbUnidad.requestFocus());
 
         // 6. UNIDAD -> FACTOR
         cmbUnidad.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    txtFactor.requestFocus();
-                    txtFactor.selectAll();
+                    txtFactor.requestFocus(); txtFactor.selectAll();
                 }
             }
         });
         
-        // 7. FACTOR -> STOCK
         txtFactor.addActionListener(e -> { txtStockInicial.requestFocus(); txtStockInicial.selectAll(); });
-
-        // 8. STOCK -> GUARDAR
         txtStockInicial.addActionListener(e -> guardar());
         
-        // ATAJOS F12 y ESC
+        // Atajos F12 y ESC
         KeyStroke f12Key = KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0);
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f12Key, "GUARDAR");
         getActionMap().put("GUARDAR", new AbstractAction() { public void actionPerformed(ActionEvent e) { guardar(); } });
@@ -204,7 +205,6 @@ public class PanelFormularioProducto extends JPanel {
 
     private void guardar() {
         try {
-            // Validaciones básicas
             Categoria catFinal = null;
             Object itemSub = cmbSubCat.getSelectedItem();
             if (itemSub instanceof Categoria) catFinal = (Categoria) itemSub;
@@ -212,12 +212,8 @@ public class PanelFormularioProducto extends JPanel {
 
             if (catFinal == null) throw new Exception("Seleccione un Rubro.");
             
-            // OBTENEMOS DATOS DEL PANEL DE PRECIOS
             String costo = panelPrecios.getCosto();
             String ganancia = panelPrecios.getGanancia();
-            // Nota: PrecioFinal no hace falta pasarlo al controlador porque se calcula solo con Costo+Ganancia+IVA,
-            // pero si tu método guardarProducto lo pide, lo sacas así:
-            // String precio = panelPrecios.getPrecioFinal(); 
 
             if(costo.trim().isEmpty()) {
                 panelPrecios.darFocoInicial();
@@ -228,9 +224,9 @@ public class PanelFormularioProducto extends JPanel {
                 txtCodigo.getText(), 
                 txtDescripcion.getText(), 
                 catFinal,
-                costo,          // Viene del Panel
-                ganancia,       // Viene del Panel
-                panelPrecios.getIVA(), // Viene del Panel
+                costo,
+                ganancia,
+                panelPrecios.getIVA(),
                 cmbUnidad.getSelectedItem().toString(), 
                 txtFactor.getText(), 
                 txtStockInicial.getText()
@@ -272,11 +268,13 @@ public class PanelFormularioProducto extends JPanel {
         t.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(200,200,200)), 
             BorderFactory.createEmptyBorder(5,5,5,5)));
+        t.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         add(t); return t;
     }
     private void estilizarBoton(JButton b, Color bg, Color fg) {
         b.setBackground(bg); b.setForeground(fg); b.setFocusPainted(false);
         b.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
     public int getStockIngresado() {
         try { return Integer.parseInt(txtStockInicial.getText()); } catch(Exception e) { return 0; }
