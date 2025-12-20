@@ -39,7 +39,7 @@ public class PanelConsultaStock extends JPanel {
         // =================================================
         // 1. PANEL SUPERIOR (FILTROS)
         // =================================================
-        JPanel panelFiltros = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15)); // Menos espacio horizontal (10)
+        JPanel panelFiltros = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15)); // Menos espacio horizontal (10)
         panelFiltros.setBackground(new Color(44, 62, 80));
         panelFiltros.setPreferredSize(new Dimension(800, 70));
         
@@ -60,7 +60,7 @@ public class PanelConsultaStock extends JPanel {
         cmbCatMadre.setPreferredSize(new Dimension(130, 25));
         
         // 2. COMBO HIJA (Subcategoría)
-        agregarLabel(panelFiltros, "Sub:");
+        
         cmbSubCat = new JComboBox<>();
         cmbSubCat.setPreferredSize(new Dimension(130, 25));
         cmbSubCat.setEnabled(false); // Nace deshabilitado

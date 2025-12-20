@@ -3,12 +3,15 @@ package interfaz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+
 import modelo.Empresa;
+import controlador.ControladorStock;
 
 public class PanelGestionStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    
+    private ControladorStock controlador;
     // --- BOTONES PÚBLICOS (Para que el MainForm les asigne acciones de navegación) ---
     public JButton btnAltaProducto;
     public JButton btnReposicion;
@@ -26,6 +29,7 @@ public class PanelGestionStock extends JPanel {
     private final Color COL_VIOLETA = new Color(142, 68, 173); // Consulta
 
     public PanelGestionStock(Empresa empresa) {
+    	this.controlador = new ControladorStock(empresa); 
         setLayout(null);
         setBackground(COLOR_FONDO);
         setBounds(0, 0, 784, 500);
@@ -59,10 +63,16 @@ public class PanelGestionStock extends JPanel {
         int anchoBtnMedio = 340; // Para botones que van de a 2
         int anchoBtnFull = 700;  // Para botones que ocupan todo
         int gap = 20;            // Espacio entre botones
+        int anchoConsulta = 340;
+        int anchoRapida = 170;
+        int anchoImportar = 170;
 
         // --- FILA 1: ACCIONES PRINCIPALES (y = 100) ---
         int fila1 = 100;
         int altoFila1 = 100;
+        
+        int fila3 = 330;
+        int altoFila3 = 90;
 
         // 1. ALTA DE PRODUCTO (Izquierda)
         btnAltaProducto = new JButton("<html><center><h2>ALTA DE PRODUCTO</h2><br>Crear artículos nuevos</center></html>");
@@ -105,23 +115,38 @@ public class PanelGestionStock extends JPanel {
         add(btnCategoria);
 
 
-        // --- FILA 3: INFORMES Y BÚSQUEDA (y = 330) ---
-        int fila3 = 330;
-        int altoFila3 = 90;
-
-        // 5. CONSULTAR STOCK (Full Ancho)
-        JButton btnConsulta = new JButton("<html><center><h2>CONSULTA Y BUSCADOR</h2><br>Filtrar por nombre, categoría y stock bajo</center></html>");
-        btnConsulta.setBounds(margenIzq, fila3, anchoBtnFull, altoFila3);
+     // 5. CONSULTAR STOCK (Buscador)
+        JButton btnConsulta = new JButton("<html><center><h2>CONSULTA</h2><br>Buscador de precios</center></html>");
+        btnConsulta.setBounds(margenIzq, fila3, anchoConsulta, altoFila3);
         estilizarBoton(btnConsulta, COL_VIOLETA, Color.WHITE);
-        
         btnConsulta.addActionListener(e -> {
             JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Buscador de Stock", true);
-            dialog.setSize(950, 600); // Un poco más ancho
+            dialog.setSize(950, 600); 
             dialog.setLocationRelativeTo(null);
             dialog.add(new PanelConsultaStock(empresa)); 
             dialog.setVisible(true);
         });
         add(btnConsulta);
+        
+        
+        
+        // 7. IMPORTAR EXCEL
+        JButton btnImportar = new JButton("<html><center><h3>IMPORTAR</h3><br>Desde Excel</center></html>");
+        // Lo ubicamos a la derecha de Carga Rápida
+        btnImportar.setBounds(margenIzq + anchoConsulta + gap + anchoRapida + gap, fila3, anchoImportar, altoFila3);
+        estilizarBoton(btnImportar, COL_AZUL, Color.WHITE);
+        
+        btnImportar.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Seleccionar archivo CSV");
+            int userSelection = fileChooser.showOpenDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                // Aquí usamos el controlador (recuerda que PanelGestionStock ya tiene 'controlador')
+                String reporte = controlador.importarProductosDesdeCSV(fileChooser.getSelectedFile());
+                JOptionPane.showMessageDialog(this, reporte);
+            }
+        });
+        add(btnImportar);
     }
     
 

@@ -7,26 +7,35 @@ import modelo.Empresa;
 public class PanelAltaStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    
-    // Para que el MainForm pueda asignar la acción de "Volver"
-    public Runnable accionVolverExterna; 
 
-    public PanelAltaStock(Empresa empresa) {
+    // Guardamos la acción en una variable privada final (segura)
+    private final Runnable accionVolver; 
+
+    // CAMBIO: El constructor ahora pide la acción obligatoriamente
+    public PanelAltaStock(Empresa empresa, Runnable accionVolver) {
+        this.accionVolver = accionVolver;
+        
         setLayout(new BorderLayout());
         
         // INSTANCIAMOS EL PANEL MAESTRO
         PanelFormularioProducto formulario = new PanelFormularioProducto(
             empresa, 
             "", // Sin código predefinido
+            
+            // 1. ACCIÓN AL GUARDAR (EXITOSO)
             () -> { 
-                // Al guardar: Limpiamos y volvemos a crear el panel (Reset)
+                // Al limpiar, creamos un nuevo panel pero LE PASAMOS LA MISMA ACCIÓN
                 removeAll();
-                add(new PanelAltaStock(empresa)); 
+                add(new PanelAltaStock(empresa, accionVolver)); 
                 revalidate();
+                repaint();
             }, 
+            
+            // 2. ACCIÓN AL CANCELAR
             () -> {
-                // Al cancelar: Llamamos a la acción del botón volver del Main
-                if (accionVolverExterna != null) accionVolverExterna.run();
+                if (accionVolver != null) {
+                    accionVolver.run(); 
+                }
             }
         );
         

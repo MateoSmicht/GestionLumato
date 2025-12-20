@@ -171,6 +171,25 @@ public class Empresa {
         return resultados;
     }
     
+    public Categoria buscarCategoriaPorNombre(String nombre) {
+        // 1. Validación básica
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return null;
+        }
+        
+        String nombreBuscado = nombre.trim(); // Quitamos espacios adelante/atrás
+
+        // 2. Recorremos el mapa de categorías (asumiendo que usas Map<Integer, Categoria>)
+        for (Categoria c : categorias.values()) {
+            // Comparamos ignorando mayúsculas (asi "bebidas" encuentra "Bebidas")
+            if (c.getNombre().equalsIgnoreCase(nombreBuscado)) {
+                return c;
+            }
+        }
+
+        // 3. Si terminamos el bucle y no apareció
+        return null;
+    }
 
     public void unificarProductos(String codPrincipal, String codDuplicado) throws Exception {
         Producto principal = stock.get(codPrincipal);

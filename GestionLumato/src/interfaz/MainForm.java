@@ -143,16 +143,15 @@ public class MainForm extends JFrame {
     private void abrirPanelAltaStock() {
         panelCuerpo.removeAll();
 
-        // Usamos el wrapper PanelAltaStock
-        PanelAltaStock panelAlta = new PanelAltaStock(empresa);
+        // AHORA PASAMOS LA ACCIÓN DIRECTAMENTE EN EL PARÉNTESIS
+        // (Empresa, Acción de Volver)
+        PanelAltaStock panelAlta = new PanelAltaStock(empresa, () -> abrirSubmenuStock());
+        
         panelAlta.setBounds(0, 0, 784, 511);
-
-        // Configuración de retorno:
-        // Si cancela o vuelve, regresa al Submenú de Stock (Colores), no al principal.
-        panelAlta.accionVolverExterna = () -> abrirSubmenuStock();
-
+        
         panelCuerpo.add(panelAlta);
-        refrescarPanel();
+        panelCuerpo.revalidate();
+        panelCuerpo.repaint();
     }
     
     

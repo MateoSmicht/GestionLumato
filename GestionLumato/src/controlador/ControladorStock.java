@@ -1,7 +1,14 @@
 package controlador;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+
+import javax.swing.JOptionPane;
+
 import modelo.Empresa;
 import modelo.Producto;
 import modelo.Categoria;
@@ -64,6 +71,70 @@ public class ControladorStock {
             return BigDecimal.ZERO;
         }
     }
+    
+    public String calcularPrecioVenta(String strCosto, String strGanancia, String strIVA) {
+        try {
+            if (strCosto == null || strCosto.isEmpty()) return "";
+            if (strGanancia == null || strGanancia.isEmpty()) strGanancia = "0";
+
+            BigDecimal costo = new BigDecimal(strCosto.replace(",", "."));
+            BigDecimal porcentajeGan = new BigDecimal(strGanancia.replace(",", ".")).divide(new BigDecimal(100));
+            BigDecimal iva = new BigDecimal(strIVA).divide(new BigDecimal(100));
+            
+            // 1. Precio Neto = Costo * (1 + %Ganancia)
+            BigDecimal precioNeto = costo.add(costo.multiply(porcentajeGan));
+            
+            // 2. Precio Final = Precio Neto * (1 + %IVA)
+            BigDecimal precioFinal = precioNeto.add(precioNeto.multiply(iva));
+            
+            return precioFinal.setScale(2, RoundingMode.HALF_UP).toString();
+        } catch (Exception e) {
+            return ""; // Si hay error (letras, vacíos), devolvemos cadena vacía
+        }
+    }
+
+    /**
+     * Devuelve las categorías para llenar el combo.
+     * Así la vista no toca la variable "empresa" directamente.
+     */
+    public List<Categoria> obtenerCategoriasMadre() {
+        return empresa.getCategoriasMadre();
+    }
+    
+    public String calcularPorcentajeGanancia(String strCosto, String strPrecioFinal) {
+        try {
+            if (strCosto == null || strCosto.isEmpty()) return "0";
+            if (strPrecioFinal == null || strPrecioFinal.isEmpty()) return "0";
+
+            java.math.BigDecimal costo = new java.math.BigDecimal(strCosto.replace(",", "."));
+            java.math.BigDecimal precioFinal = new java.math.BigDecimal(strPrecioFinal.replace(",", "."));
+            
+            // Asumimos IVA 21% por defecto para este cálculo rápido inverso
+            // Si quisieras ser exacto, deberías pasar el IVA como parámetro también.
+            java.math.BigDecimal iva = new java.math.BigDecimal("1.21"); 
+
+            // Evitamos división por cero
+            if (costo.compareTo(java.math.BigDecimal.ZERO) == 0) return "0";
+
+            // 1. Costo con IVA
+            java.math.BigDecimal costoConIVA = costo.multiply(iva);
+            
+            // 2. División (Precio / CostoConIVA) - 1
+            java.math.BigDecimal gananciaDecimal = precioFinal
+                .divide(costoConIVA, 4, java.math.RoundingMode.HALF_UP)
+                .subtract(java.math.BigDecimal.ONE);
+            
+            // 3. Multiplicar por 100 para porcentaje
+            return gananciaDecimal.multiply(new java.math.BigDecimal("100"))
+                .setScale(2, java.math.RoundingMode.HALF_UP)
+                .toString();
+
+        } catch (Exception e) {
+            return "0";
+        }
+    }
+    
+    
 
     /**
      * Valida y Guarda el producto en la empresa
@@ -132,7 +203,84 @@ public class ControladorStock {
         }
         return candidato;
     }
-    
+    /**
+     * Procesa un archivo CSV y carga los productos.
+     * @param archivo El archivo seleccionado por el usuario.
+     * @return Un mensaje con el resumen de la operación.
+     */
+    public String importarProductosDesdeCSV(File archivo) {
+        int cargados = 0;
+        int errores = 0;
+        int saltados = 0;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            
+            while ((linea = br.readLine()) != null) {
+                linea = linea.trim();
+                
+                // 1. LIMPIEZA
+                if (linea.isEmpty()) continue;
+                String lineaUpper = linea.toUpperCase();
+                if (lineaUpper.startsWith("CODIGO") || lineaUpper.startsWith("A,B,C")) {
+                    saltados++;
+                    continue;
+                }
+
+                try {
+                    // 2. SEPARADOR
+                    String[] datos = linea.split(";");
+                    if (datos.length < 5) datos = linea.split(",");
+                    if (datos.length < 5) { saltados++; continue; }
+
+                    // 3. DATOS
+                    String codigo = datos[0].trim();
+                    String descripcion = datos[1].trim();
+                    String nombreCategoria = datos[2].trim();
+                    
+                    String costoStr = datos[3].replace("$", "").replace(",", ".").trim();
+                    String precioStr = datos[4].replace("$", "").replace(",", ".").trim();
+                    
+                    String stockStr = datos[5].replace(",", ".").trim();
+                    if(stockStr.contains(".")) stockStr = stockStr.substring(0, stockStr.indexOf("."));
+
+                    // 4. CATEGORÍA
+                    Categoria cat = empresa.buscarCategoriaPorNombre(nombreCategoria);
+                    if (cat == null) {
+                        empresa.crearCategoria(nombreCategoria, null);
+                        cat = empresa.buscarCategoriaPorNombre(nombreCategoria);
+                    }
+
+                    // 5. CALCULAR GANANCIA
+                    String gananciaCalculada = calcularPorcentajeGanancia(costoStr, precioStr);
+
+                    // 6. GUARDAR
+                    this.guardarProducto(
+                        codigo, 
+                        descripcion, 
+                        cat, 
+                        costoStr, 
+                        gananciaCalculada, // Usamos el valor de la función
+                        "21.0", 
+                        "UNI", 
+                        "1", 
+                        stockStr
+                    );
+
+                    cargados++;
+
+                } catch (Exception e) {
+                    errores++;
+                    System.out.println("Error procesando línea: " + linea + " | " + e.getMessage());
+                }
+            }
+            
+            return "Importación finalizada.\n✅ Cargados: " + cargados + "\n❌ Errores: " + errores + "\n⏭️ Saltados: " + saltados;
+
+        } catch (Exception e) {
+            return "Error crítico al abrir archivo: " + e.getMessage();
+        }   
+    }
     
     }
     	
