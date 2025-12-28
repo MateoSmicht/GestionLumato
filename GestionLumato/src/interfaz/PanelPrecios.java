@@ -9,7 +9,7 @@ import controlador.ControladorStock;
 public class PanelPrecios extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    
+    private static boolean memoriaModoManual = true; // Por defecto arranca en true
     // Componentes
     private JTextField txtCosto;
     private JTextField txtGanancia;
@@ -42,7 +42,7 @@ public class PanelPrecios extends JPanel {
         chkPrecioManual = new JCheckBox("Fijar Precio Manualmente");
         chkPrecioManual.setBounds(250, 25, 220, 35);
         chkPrecioManual.setBackground(new Color(245, 246, 250));
-        chkPrecioManual.setSelected(true); // Default Manual
+        chkPrecioManual.setSelected(memoriaModoManual);
         add(chkPrecioManual);
 
         // 4. GANANCIA
@@ -69,7 +69,19 @@ public class PanelPrecios extends JPanel {
     
     private void configurarEventos() {
         // NAVEGACIÓN INTERNA (Enter pasa al siguiente)
-        txtCosto.addActionListener(e -> { cmbIVA.requestFocus(); cmbIVA.showPopup(); });
+            txtCosto.addActionListener(e -> {
+                if (chkPrecioManual.isSelected()) {
+                    // CASO MANUAL: Saltamos IVA y Ganancia -> Directo a Precio Final
+                    txtPrecioFinal.requestFocus();
+                    txtPrecioFinal.selectAll(); // Selecciona el texto para sobrescribir rápido
+                } else {
+                    // CASO AUTOMÁTICO: Flujo normal -> IVA
+                    cmbIVA.requestFocus();
+                    try { cmbIVA.showPopup(); } catch(Exception ex) {}
+                }
+            });
+            
+       
         
         // Enter en IVA -> Pasa a Ganancia o Precio
         cmbIVA.addKeyListener(new KeyAdapter() {
@@ -82,26 +94,18 @@ public class PanelPrecios extends JPanel {
             }
         });
 
-        // LÓGICA INTELIGENTE DEL PRECIO (El famoso 50%)
-        txtPrecioFinal.addActionListener(e -> {
-            String texto = txtPrecioFinal.getText().trim();
-            if (texto.isEmpty()) {
-                // Auto 50%
-                chkPrecioManual.setSelected(false);
-                txtGanancia.setText("50");
-                actualizarEstadoManual();
-                actualizarCalculos();
-                txtGanancia.requestFocus();
-            } else {
-                actualizarCalculos();
-                // AVISAR AL PADRE (Para que salte a Guardar o Unidad)
-                if(onEnterEnPrecio != null) onEnterEnPrecio.actionPerformed(e);
-            }
-        });
-
-        // Evento Ganancia
+     // Evento Ganancia (CORREGIDO)
         txtGanancia.addActionListener(e -> {
+            String texto = txtGanancia.getText().trim();
+            
+            // Si el usuario deja vacío y da Enter -> Asumimos 50%
+            if (texto.isEmpty()) {
+                txtGanancia.setText("50");
+            }
+            
             actualizarCalculos();
+            
+            // Avisamos al padre para que salte al siguiente campo (Unidad/Guardar)
             if(onEnterEnPrecio != null) onEnterEnPrecio.actionPerformed(e);
         });
 
@@ -137,11 +141,22 @@ public class PanelPrecios extends JPanel {
 
     private void actualizarEstadoManual() {
         boolean manual = chkPrecioManual.isSelected();
+        
+        // CAMBIO: Guardamos la decisión para el futuro
+        memoriaModoManual = manual; 
+        
+        // 1. Control de campos (Igual que antes)
         txtPrecioFinal.setEditable(manual);
         txtGanancia.setEditable(!manual);
         txtPrecioFinal.setBackground(manual ? Color.WHITE : new Color(230,230,230));
         txtGanancia.setBackground(!manual ? Color.WHITE : new Color(230,230,230));
-        if(manual) actualizarCalculos();
+        
+        // 2. Control de IVA (Igual que antes)
+        cmbIVA.setEnabled(!manual);
+        if (manual) cmbIVA.setSelectedItem("0.0");
+
+        // 3. Recalcular
+        actualizarCalculos();
     }
 
     // --- GETTERS Y SETTERS (Para sacar y meter datos) ---

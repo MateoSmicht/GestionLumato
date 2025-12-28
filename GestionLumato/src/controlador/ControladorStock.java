@@ -108,10 +108,7 @@ public class ControladorStock {
 
             java.math.BigDecimal costo = new java.math.BigDecimal(strCosto.replace(",", "."));
             java.math.BigDecimal precioFinal = new java.math.BigDecimal(strPrecioFinal.replace(",", "."));
-            
-            // Asumimos IVA 21% por defecto para este cálculo rápido inverso
-            // Si quisieras ser exacto, deberías pasar el IVA como parámetro también.
-            java.math.BigDecimal iva = new java.math.BigDecimal("1.21"); 
+            java.math.BigDecimal iva = new java.math.BigDecimal("1.0"); 
 
             // Evitamos división por cero
             if (costo.compareTo(java.math.BigDecimal.ZERO) == 0) return "0";
@@ -325,6 +322,11 @@ public class ControladorStock {
                           .toPlainString();
         if (texto.equals("21")) return "21.0"; // Ajuste estético
         return texto;
+    }
+ 
+
+    public List<Categoria> obtenerSubCategorias(int idMadre) {
+        return empresa.getSubcategorias(idMadre);
     }
     
     }

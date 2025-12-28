@@ -244,10 +244,16 @@ public class PanelFormularioProducto extends JPanel {
         cmbCatMadre.addActionListener(e -> {
             Object sel = cmbCatMadre.getSelectedItem();
             cmbSubCat.removeAllItems();
+            
             if (sel instanceof Categoria) {
                 cmbSubCat.setEnabled(true);
-                List<Categoria> hijas = empresa.getSubcategorias(((Categoria)sel).getId());
-                for (Categoria h : hijas) cmbSubCat.addItem(h);
+                
+                int idMadre = ((Categoria)sel).getId();
+                List<Categoria> hijas = controlador.obtenerSubCategorias(idMadre);
+                
+                for (Categoria h : hijas) {
+                    cmbSubCat.addItem(h);
+                }
             } else {
                 cmbSubCat.setEnabled(false);
             }
