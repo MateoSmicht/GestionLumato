@@ -14,45 +14,49 @@ public class DialogoNuevaCategoria extends JDialog {
     private ControladorCategoria controlador;
     
     // --- COMPONENTES VISUALES ---
-    // Pestaña Crear
+    
+    // 1. Pestaña Crear
     private JTextField txtNombreNuevo;
     private JCheckBox chkEsSubcategoria;
     private JComboBox<Categoria> cmbMadresCrear;
     private JLabel lblPerteneceA;
     
-    // Pestaña Editar
+    // 2. Pestaña Editar
     private JComboBox<Categoria> cmbTodasEditar;
     private JTextField txtNombreEditar;
     private JComboBox<Object> cmbPadreEditar;
+    
+    // 3. Pestaña Eliminar (NUEVO)
+    private JComboBox<Categoria> cmbTodasEliminar;
 
     public DialogoNuevaCategoria(JFrame parent, Empresa empresa) {
         super(parent, "Gestión de Categorías", true);
         
-        // 1. Inicializamos el controlador
         this.controlador = new ControladorCategoria(empresa);
 
-        setSize(500, 350); 
+        setSize(500, 400);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         
-        // 2. Sistema de Pestañas
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         
+        // Pestañas existentes
         tabs.addTab("Crear Nueva", crearPanelCrear());
-        tabs.addTab("Editar / Renombrar", crearPanelEditar());
+        tabs.addTab("Editar / Mover", crearPanelEditar());
         
-        // Evento: Recargar listas al cambiar de pestaña
+        // --- NUEVA PESTAÑA AGREGADA ---
+        tabs.addTab("Eliminar", crearPanelEliminar());
+        
         tabs.addChangeListener(e -> cargarListas());
 
         add(tabs, BorderLayout.CENTER);
         
-        // Carga inicial
         cargarListas();
     }
 
     // ==========================================
-    // PESTAÑA 1: CREAR
+    // PESTAÑA 1: CREAR (SIN CAMBIOS)
     // ==========================================
     private JPanel crearPanelCrear() {
         JPanel panel = new JPanel(null);
@@ -84,7 +88,6 @@ public class DialogoNuevaCategoria extends JDialog {
         cmbMadresCrear.setEnabled(false);
         panel.add(cmbMadresCrear);
 
-        // Lógica visual del Checkbox
         chkEsSubcategoria.addActionListener(e -> {
             boolean esHija = chkEsSubcategoria.isSelected();
             lblPerteneceA.setEnabled(esHija);
@@ -92,10 +95,9 @@ public class DialogoNuevaCategoria extends JDialog {
         });
 
         JButton btnGuardar = new JButton("GUARDAR NUEVA");
-        btnGuardar.setBounds(130, 210, 230, 40);
-        estilizarBoton(btnGuardar, new Color(39, 174, 96)); // Verde
+        btnGuardar.setBounds(130, 230, 230, 40);
+        estilizarBoton(btnGuardar, new Color(39, 174, 96), Color.WHITE);
         
-        // ACCIÓN: Delegamos al controlador
         btnGuardar.addActionListener(e -> {
             try {
                 String nombre = txtNombreNuevo.getText();
@@ -106,25 +108,23 @@ public class DialogoNuevaCategoria extends JDialog {
 
                 JOptionPane.showMessageDialog(this, "Categoría creada con éxito.");
                 limpiarCrear();
-                cargarListas(); // Refrescar combos
+                cargarListas(); 
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         panel.add(btnGuardar);
-
         return panel;
     }
 
     // ==========================================
-    // PESTAÑA 2: EDITAR
+    // PESTAÑA 2: EDITAR (SIN CAMBIOS)
     // ==========================================
     private JPanel crearPanelEditar() {
         JPanel panel = new JPanel(null);
         panel.setBackground(new Color(245, 246, 250));
 
-        // 1. SELECCIONAR CATEGORÍA A CORREGIR
         JLabel lblSel = new JLabel("Seleccione Categoría a editar:");
         lblSel.setBounds(30, 20, 250, 20);
         panel.add(lblSel);
@@ -133,7 +133,6 @@ public class DialogoNuevaCategoria extends JDialog {
         cmbTodasEditar.setBounds(30, 45, 420, 30);
         panel.add(cmbTodasEditar);
 
-        // 2. CAMPO NOMBRE (Izquierda)
         JLabel lblNom = new JLabel("Nombre:");
         lblNom.setBounds(30, 90, 200, 20);
         panel.add(lblNom);
@@ -142,82 +141,141 @@ public class DialogoNuevaCategoria extends JDialog {
         txtNombreEditar.setBounds(30, 115, 200, 35); 
         panel.add(txtNombreEditar);
 
-        // 3. CAMPO PADRE (Derecha) - AQUÍ ESTÁ LA MAGIA
         JLabel lblPadre = new JLabel("Mover a (Rubro Padre):");
         lblPadre.setBounds(250, 90, 200, 20);
         panel.add(lblPadre);
 
         cmbPadreEditar = new JComboBox<>();
-        cmbPadreEditar.setBounds(250, 115, 200, 35); 
+        cmbPadreEditar.setBounds(250, 115, 200, 35);
         panel.add(cmbPadreEditar);
 
-        // --- LÓGICA DE SELECCIÓN ---
-        // Cuando eliges una categoría arriba, se llenan los campos de abajo automáticamente
         cmbTodasEditar.addActionListener(e -> {
             Categoria seleccionada = (Categoria) cmbTodasEditar.getSelectedItem();
             if (seleccionada != null) {
-                // A. Poner nombre actual
                 txtNombreEditar.setText(seleccionada.getNombre());
-                
-                // B. Poner el padre actual en el combo de la derecha
                 actualizarComboPadres(seleccionada);
             }
         });
 
-        // BOTÓN GUARDAR
         JButton btnEditar = new JButton("GUARDAR CAMBIOS");
         btnEditar.setBounds(130, 200, 230, 40);
-        
+        estilizarBoton(btnEditar, new Color(230, 126, 34), Color.WHITE);
         
         btnEditar.addActionListener(e -> {
             try {
                 Categoria cat = (Categoria) cmbTodasEditar.getSelectedItem();
                 String nuevoNombre = txtNombreEditar.getText();
                 
-                // Obtenemos el nuevo padre (puede ser "Sin Padre" o una Categoria)
                 Object itemPadre = cmbPadreEditar.getSelectedItem();
                 Categoria nuevaMadre = null;
-                
                 if (itemPadre instanceof Categoria) {
                     nuevaMadre = (Categoria) itemPadre;
                 }
-                // Si seleccionó el String "--- Es Principal ---", nuevaMadre queda null (correcto)
-
+                
                 controlador.modificarCategoria(cat, nuevoNombre, nuevaMadre);
                 
-                JOptionPane.showMessageDialog(this, "¡Categoría movida y actualizada!");
-                cargarListas(); // Refrescar todo para ver cambios
+                JOptionPane.showMessageDialog(this, "Categoría actualizada correctamente.");
+                cargarListas();
                 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         panel.add(btnEditar);
+        return panel;
+    }
+
+    // ==========================================
+    // PESTAÑA 3: ELIMINAR (AGREGADO NUEVO)
+    // ==========================================
+    private JPanel crearPanelEliminar() {
+        JPanel panel = new JPanel(null);
+        panel.setBackground(new Color(245, 246, 250));
+
+        JLabel lblTitulo = new JLabel("ELIMINAR CATEGORÍA");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTitulo.setForeground(new Color(192, 57, 43));
+        lblTitulo.setBounds(30, 20, 300, 25);
+        panel.add(lblTitulo);
+
+        JLabel lblInfo = new JLabel("<html><body style='width: 380px'>Solo se pueden eliminar categorías que no tengan productos asociados ni subcategorías.<br>Si desea borrar una con productos, primero muévalos o bórrelos.</body></html>");
+        lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblInfo.setForeground(Color.GRAY);
+        lblInfo.setBounds(30, 50, 420, 50);
+        panel.add(lblInfo);
+
+        JLabel lblSel = new JLabel("Seleccione Categoría a borrar:");
+        lblSel.setBounds(30, 110, 250, 20);
+        panel.add(lblSel);
+
+        cmbTodasEliminar = new JComboBox<>();
+        cmbTodasEliminar.setBounds(30, 135, 420, 35);
+        panel.add(cmbTodasEliminar);
+
+        JButton btnEliminar = new JButton("ELIMINAR DEFINITIVAMENTE");
+        btnEliminar.setBounds(100, 200, 300, 40);
+        estilizarBoton(btnEliminar, new Color(192, 57, 43), Color.WHITE); // Rojo
+        
+        btnEliminar.addActionListener(e -> {
+            Categoria cat = (Categoria) cmbTodasEliminar.getSelectedItem();
+            if (cat == null) return;
+
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "¿Estás seguro de eliminar '" + cat.getNombre() + "'?\nEsta acción no se puede deshacer.",
+                "Confirmar Eliminación", 
+                JOptionPane.YES_NO_OPTION, 
+                JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    controlador.eliminarCategoria(cat); // Asegurate que este método exista en tu controlador
+                    JOptionPane.showMessageDialog(this, "Categoría eliminada.");
+                    cargarListas();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo eliminar", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        panel.add(btnEliminar);
 
         return panel;
     }
 
-    // --- MÉTODO AUXILIAR CRÍTICO ---
-    // Llena el combo de la derecha filtrando para que no te elijas a ti mismo
+    // ==========================================
+    // MÉTODOS AUXILIARES
+    // ==========================================
+
+    private void cargarListas() {
+        cmbMadresCrear.removeAllItems();
+        cmbTodasEditar.removeAllItems();
+        
+        // --- NUEVO: Limpiamos combo eliminar ---
+        cmbTodasEliminar.removeAllItems();
+        
+        for (Categoria c : controlador.obtenerCategoriasMadre()) {
+            cmbMadresCrear.addItem(c);
+        }
+
+        for (Categoria c : controlador.obtenerTodas()) {
+            cmbTodasEditar.addItem(c);
+            // --- NUEVO: Cargamos combo eliminar ---
+            cmbTodasEliminar.addItem(c);
+        }
+    }
+    
     private void actualizarComboPadres(Categoria catActual) {
         cmbPadreEditar.removeAllItems();
-        
-        // Opción 1: Que sea principal (sin padre)
         cmbPadreEditar.addItem("--- Es Principal ---");
         
-        // Opción 2: Listar todas las posibles madres
         for (Categoria posibleMadre : controlador.obtenerCategoriasMadre()) {
-            // REGLA DE ORO: No puedes ser tu propio padre
             if (posibleMadre.getId() != catActual.getId()) {
                 cmbPadreEditar.addItem(posibleMadre);
             }
         }
         
-        // PRE-SELECCIONAR EL PADRE ACTUAL
         if (catActual.getIdPadre() == null) {
-            cmbPadreEditar.setSelectedIndex(0); // "Es Principal"
+            cmbPadreEditar.setSelectedIndex(0); 
         } else {
-            // Buscar la categoría padre en el combo y seleccionarla visualmente
             for (int i = 1; i < cmbPadreEditar.getItemCount(); i++) {
                 Categoria c = (Categoria) cmbPadreEditar.getItemAt(i);
                 if (c.getId() == catActual.getIdPadre()) {
@@ -228,30 +286,6 @@ public class DialogoNuevaCategoria extends JDialog {
         }
     }
 
-    // ==========================================
-    // MÉTODOS AUXILIARES
-    // ==========================================
-
-    private void cargarListas() {
-        // Guardamos selección actual para intentar restaurarla luego
-        Object seleccionMadre = cmbMadresCrear.getSelectedItem();
-        Object seleccionTodas = cmbTodasEditar.getSelectedItem();
-
-        cmbMadresCrear.removeAllItems();
-        for (Categoria c : controlador.obtenerCategoriasMadre()) {
-            cmbMadresCrear.addItem(c);
-        }
-
-        cmbTodasEditar.removeAllItems();
-        for (Categoria c : controlador.obtenerTodas()) {
-            cmbTodasEditar.addItem(c);
-        }
-        
-        // Restaurar selección si sigue existiendo (Mejora UX)
-        if (seleccionMadre != null) cmbMadresCrear.setSelectedItem(seleccionMadre);
-        if (seleccionTodas != null) cmbTodasEditar.setSelectedItem(seleccionTodas);
-    }
-
     private void limpiarCrear() {
         txtNombreNuevo.setText("");
         chkEsSubcategoria.setSelected(false);
@@ -260,11 +294,12 @@ public class DialogoNuevaCategoria extends JDialog {
         if (cmbMadresCrear.getItemCount() > 0) cmbMadresCrear.setSelectedIndex(0);
     }
     
-    private void estilizarBoton(JButton btn, Color bg) {
+    private void estilizarBoton(JButton btn, Color bg, Color fg) {
         btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
+        btn.setForeground(fg);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 }

@@ -32,6 +32,16 @@ public class ControladorCategoria {
         // Nota: Asumimos que empresa.crearCategoria ya maneja la lógica de IDs y guardado
         empresa.crearCategoria(nombre.trim(), idPadre);
     }
+    
+    public void eliminarCategoria(Categoria cat) throws Exception{
+    	if(empresa.categoriaEstaEnUso(cat)) {
+    		throw new Exception("La categoria es una subcategoria");
+    	}
+    	if(empresa.categoriaTieneProductos(cat)) {
+    		throw new Exception("La categoria tiene productos asociados, primero elimina los productos.");
+    	}
+    	empresa.eliminarCategoria(cat);
+    }
 
     
 

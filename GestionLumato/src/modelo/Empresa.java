@@ -135,24 +135,24 @@ public class Empresa {
 			}
 		}
 
-		// 2. REVISAR SI TIENE PRODUCTOS ASIGNADOS
-		// Asumiendo que 'productos' es un Map<String, Producto>
+		return false; // Está limpia, se puede borrar.
+	}
+
+	public boolean categoriaTieneProductos(Categoria cat) {
+		int idParaBorrar = cat.getId();
 		for (Producto p : this.stock.values()) {
 			if (p.getCategoria() != null && p.getCategoria().getId() == idParaBorrar) {
 				return true; // No se puede borrar, tiene productos.
 			}
 		}
-
-		return false; // Está limpia, se puede borrar.
+		return false;
 	}
 
 	/**
 	 * Elimina la categoría buscando por ID para evitar errores de referencia.
 	 */
 	public void eliminarCategoria(Categoria c) {
-		// removeIf es la forma moderna y segura de borrar en una lista
-		// "Borrar de la lista SI el id coincide con el que quiero borrar"
-		this.categorias.remove(c);
+		this.categorias.remove(c.getId());
 	}
 
 	public List<Producto> buscarConFiltros(String texto, Categoria categoriaFiltro, Integer stockMaximo) {
