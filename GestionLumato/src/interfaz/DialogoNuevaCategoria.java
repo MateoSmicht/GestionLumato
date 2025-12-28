@@ -23,6 +23,7 @@ public class DialogoNuevaCategoria extends JDialog {
     // Pestaña Editar
     private JComboBox<Categoria> cmbTodasEditar;
     private JTextField txtNombreEditar;
+    private JComboBox<Object> cmbPadreEditar;
 
     public DialogoNuevaCategoria(JFrame parent, Empresa empresa) {
         super(parent, "Gestión de Categorías", true);
@@ -123,43 +124,69 @@ public class DialogoNuevaCategoria extends JDialog {
         JPanel panel = new JPanel(null);
         panel.setBackground(new Color(245, 246, 250));
 
-        JLabel lblSel = new JLabel("Seleccione Categoría:");
-        lblSel.setBounds(30, 30, 200, 20);
+        // 1. SELECCIONAR CATEGORÍA A CORREGIR
+        JLabel lblSel = new JLabel("Seleccione Categoría a editar:");
+        lblSel.setBounds(30, 20, 250, 20);
         panel.add(lblSel);
 
         cmbTodasEditar = new JComboBox<>();
-        cmbTodasEditar.setBounds(30, 55, 420, 30);
-        
-        // Al seleccionar del combo, llenamos el campo de texto
-        cmbTodasEditar.addActionListener(e -> {
-            Categoria c = (Categoria) cmbTodasEditar.getSelectedItem();
-            if (c != null) txtNombreEditar.setText(c.getNombre());
-        });
+        cmbTodasEditar.setBounds(30, 45, 420, 30);
         panel.add(cmbTodasEditar);
 
-        JLabel lblNom = new JLabel("Nuevo Nombre:");
-        lblNom.setBounds(30, 100, 200, 20);
+        // 2. CAMPO NOMBRE (Izquierda)
+        JLabel lblNom = new JLabel("Nombre:");
+        lblNom.setBounds(30, 90, 200, 20);
         panel.add(lblNom);
 
         txtNombreEditar = new JTextField();
-        txtNombreEditar.setBounds(30, 125, 420, 35);
+        txtNombreEditar.setBounds(30, 115, 200, 35); 
         panel.add(txtNombreEditar);
 
+        // 3. CAMPO PADRE (Derecha) - AQUÍ ESTÁ LA MAGIA
+        JLabel lblPadre = new JLabel("Mover a (Rubro Padre):");
+        lblPadre.setBounds(250, 90, 200, 20);
+        panel.add(lblPadre);
+
+        cmbPadreEditar = new JComboBox<>();
+        cmbPadreEditar.setBounds(250, 115, 200, 35); 
+        panel.add(cmbPadreEditar);
+
+        // --- LÓGICA DE SELECCIÓN ---
+        // Cuando eliges una categoría arriba, se llenan los campos de abajo automáticamente
+        cmbTodasEditar.addActionListener(e -> {
+            Categoria seleccionada = (Categoria) cmbTodasEditar.getSelectedItem();
+            if (seleccionada != null) {
+                // A. Poner nombre actual
+                txtNombreEditar.setText(seleccionada.getNombre());
+                
+                // B. Poner el padre actual en el combo de la derecha
+                actualizarComboPadres(seleccionada);
+            }
+        });
+
+        // BOTÓN GUARDAR
         JButton btnEditar = new JButton("GUARDAR CAMBIOS");
-        btnEditar.setBounds(130, 190, 230, 40);
-        estilizarBoton(btnEditar, new Color(230, 126, 34)); // Naranja
+        btnEditar.setBounds(130, 200, 230, 40);
         
-        // ACCIÓN: Delegamos al controlador
+        
         btnEditar.addActionListener(e -> {
             try {
                 Categoria cat = (Categoria) cmbTodasEditar.getSelectedItem();
                 String nuevoNombre = txtNombreEditar.getText();
                 
-                controlador.modificarNombre(cat, nuevoNombre);
+                // Obtenemos el nuevo padre (puede ser "Sin Padre" o una Categoria)
+                Object itemPadre = cmbPadreEditar.getSelectedItem();
+                Categoria nuevaMadre = null;
                 
-                JOptionPane.showMessageDialog(this, "Actualizado correctamente.");
-                cargarListas();
-                txtNombreEditar.setText("");
+                if (itemPadre instanceof Categoria) {
+                    nuevaMadre = (Categoria) itemPadre;
+                }
+                // Si seleccionó el String "--- Es Principal ---", nuevaMadre queda null (correcto)
+
+                controlador.modificarCategoria(cat, nuevoNombre, nuevaMadre);
+                
+                JOptionPane.showMessageDialog(this, "¡Categoría movida y actualizada!");
+                cargarListas(); // Refrescar todo para ver cambios
                 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -168,6 +195,37 @@ public class DialogoNuevaCategoria extends JDialog {
         panel.add(btnEditar);
 
         return panel;
+    }
+
+    // --- MÉTODO AUXILIAR CRÍTICO ---
+    // Llena el combo de la derecha filtrando para que no te elijas a ti mismo
+    private void actualizarComboPadres(Categoria catActual) {
+        cmbPadreEditar.removeAllItems();
+        
+        // Opción 1: Que sea principal (sin padre)
+        cmbPadreEditar.addItem("--- Es Principal ---");
+        
+        // Opción 2: Listar todas las posibles madres
+        for (Categoria posibleMadre : controlador.obtenerCategoriasMadre()) {
+            // REGLA DE ORO: No puedes ser tu propio padre
+            if (posibleMadre.getId() != catActual.getId()) {
+                cmbPadreEditar.addItem(posibleMadre);
+            }
+        }
+        
+        // PRE-SELECCIONAR EL PADRE ACTUAL
+        if (catActual.getIdPadre() == null) {
+            cmbPadreEditar.setSelectedIndex(0); // "Es Principal"
+        } else {
+            // Buscar la categoría padre en el combo y seleccionarla visualmente
+            for (int i = 1; i < cmbPadreEditar.getItemCount(); i++) {
+                Categoria c = (Categoria) cmbPadreEditar.getItemAt(i);
+                if (c.getId() == catActual.getIdPadre()) {
+                    cmbPadreEditar.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
     }
 
     // ==========================================

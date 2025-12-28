@@ -33,15 +33,30 @@ public class ControladorCategoria {
         empresa.crearCategoria(nombre.trim(), idPadre);
     }
 
-    public void modificarNombre(Categoria categoria, String nuevoNombre) throws Exception {
-        if (categoria == null) {
-            throw new Exception("Debe seleccionar una categoría para editar.");
-        }
+    
+
+
+    public void modificarCategoria(Categoria cat, String nuevoNombre, Categoria nuevaMadre) throws Exception {
+        // 1. Validaciones básicas
         if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
-            throw new Exception("El nuevo nombre no puede estar vacío.");
+            throw new Exception("El nombre no puede estar vacío.");
+        }
+
+        // 2. Validación de Jerarquía: No puede ser su propio padre
+        if (nuevaMadre != null && nuevaMadre.getId() == cat.getId()) {
+            throw new Exception("Una categoría no puede ser su propia madre.");
+        }
+
+        // 3. Aplicar cambios
+        cat.setNombre(nuevoNombre);
+
+        if (nuevaMadre != null) {
+            cat.setIdPadre(nuevaMadre.getId()); // Se convierte en Subcategoría
+        } else {
+            cat.setIdPadre(null); // Se convierte en Categoría Principal (Madre)
         }
         
-        empresa.modificarCategoria(categoria, nuevoNombre.trim());
+        // Aquí (si usaras BD) iría: dao.actualizar(cat);
     }
 
     // --- Métodos para llenar los ComboBox ---
