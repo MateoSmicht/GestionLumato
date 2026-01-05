@@ -93,11 +93,20 @@ public class PanelPrecios extends JPanel {
                 }
             }
         });
+        
+        txtPrecioFinal.addActionListener(e -> {
+            // Aseguramos que el cálculo esté fresco
+            actualizarCalculos(); 
+            
+            if (onEnterEnPrecio != null) {
+                onEnterEnPrecio.actionPerformed(e);
+            }
+        });
 
      // Evento Ganancia (CORREGIDO)
         txtGanancia.addActionListener(e -> {
             String texto = txtGanancia.getText().trim();
-            
+           
             // Si el usuario deja vacío y da Enter -> Asumimos 50%
             if (texto.isEmpty()) {
                 txtGanancia.setText("50");
