@@ -212,5 +212,23 @@ txtCosto.setText(costo != null ? costo.toString() : "0");
         add(t); return t;
     }
     
+    
+    /**
+     * Permite ejecutar una acción cada vez que cambian los valores (Costo, Ganancia, etc.)
+     * Útil para recalcular el PPP en el diálogo padre.
+     */
+    public void agregarEscuchadorCambios(Runnable accion) {
+        java.awt.event.KeyAdapter k = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                accion.run();
+            }
+        };
+        txtCosto.addKeyListener(k);
+        txtGanancia.addKeyListener(k);
+        txtPrecioFinal.addKeyListener(k);
+        chkPrecioManual.addActionListener(e -> accion.run());
+        cmbIVA.addActionListener(e -> accion.run());
+    }
    
 }

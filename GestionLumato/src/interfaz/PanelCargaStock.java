@@ -421,31 +421,38 @@ public class PanelCargaStock extends JPanel {
         modeloTabla.setRowCount(0);
         List<DetalleCarga> lista = controlador.getListaItems();
         
+        System.out.println("--- REFRESCANDO TABLA (" + lista.size() + " ítems) ---");
+
         for (DetalleCarga item : lista) {
-            int aSumar = item.getUnidadesReales();
-            
-            // 1. Pedimos al controlador la proyección del PPP (Promedio)
+            // 1. Proyección PPP
             BigDecimal valorPPP = controlador.calcularProyeccionPPP(item);
             String pppTexto = "$" + valorPPP.toString();
             
-            // 2. Mostramos los valores TEMPORALES del item (los que está editando el usuario)
-            String costoTexto = item.getCostoNuevo().toString();
+            // --- AQUÍ ESTÁ LA CLAVE ---
+            // Imprimimos qué tiene el objeto realmente en la memoria
+            System.out.println("Item: " + item.getProducto().getDescripcion());
+            System.out.println("   > Costo en Producto (Viejo): " + item.getProducto().getPrecioCosto());
+            System.out.println("   > Costo en Carga (Nuevo):    " + item.getCostoNuevo());
+            
+            // SI ESTA LÍNEA ESTÁ MAL, LA TABLA SE VERÁ MAL
+            // Debes usar item.getCostoNuevo(), NO getProducto().getPrecioCosto()
+            String costoTexto = item.getCostoNuevo().toString(); 
+            
             String ventaTexto = item.getPrecioVenta().toString();
 
             modeloTabla.addRow(new Object[] {
                 item.getCodigoLeido(),
                 item.getProducto().getDescripcion(),
-                costoTexto,   // Costo Editable
-                pppTexto,     // PPP Calculado (Azul)
-                ventaTexto,   // Venta Editable (Verde)
+                costoTexto,   // <--- Esta variable es la que manda
+                pppTexto,
+                ventaTexto,
                 item.isEsBulto() ? "BULTO" : "UNIDAD",
                 item.getCantidad(),
-                item.getProducto().getCantidadStock() + aSumar 
+                item.getProducto().getCantidadStock() + item.getUnidadesReales() 
             });
         }
         lblTotalInfo.setText("Ítems a cargar: " + lista.size());
     }
-
     // --- RESTO DE MÉTODOS DE BÚSQUEDA Y DIÁLOGOS ---
 
     private void abrirBusquedaAvanzada() {
@@ -475,31 +482,87 @@ public class PanelCargaStock extends JPanel {
     }
 
     private void abrirConsultaPrecio() {
-        String codigo = "";
-        if (!txtBusqueda.getText().trim().isEmpty()) {
-            String entrada = txtBusqueda.getText().trim();
-            codigo = entrada.contains("*") ? entrada.split("\\*")[1] : entrada;
-        } else if (tableDetalle.getSelectedRow() != -1) {
-            codigo = tableDetalle.getValueAt(tableDetalle.getSelectedRow(), 0).toString();
-        } else {
-            codigo = JOptionPane.showInputDialog(this, "Ingrese Código para MODIFICAR PRECIO (F6):");
+        // 1. SI ESTÁN EDITANDO UNA CELDA, LA CERRAMOS A LA FUERZA
+        if (tableDetalle.isEditing()) {
+            tableDetalle.getCellEditor().stopCellEditing();
         }
 
+        // --- VALIDACIÓN NUEVA (LO QUE PEDISTE) ---
+        
+        // Caso A: No hay nada cargado en la tabla
+        if (controlador.getListaItems().isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No hay productos en la lista.\nPor favor, cargue un producto primero.", 
+                "Tabla Vacía", JOptionPane.WARNING_MESSAGE);
+            enfocarBuscador();
+            return;
+        }
+
+        // Caso B: Hay productos, pero no seleccionó ninguno y el buscador está vacío
+        // (Solo validamos esto si NO escribió un código manual en el buscador)
+        if (tableDetalle.getSelectedRow() == -1 && txtBusqueda.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Por favor, seleccione un producto de la tabla para modificar su precio.", 
+                "Sin Selección", JOptionPane.WARNING_MESSAGE);
+            tableDetalle.requestFocus();
+            return;
+        }
+        // -----------------------------------------
+
+        String codigo = "";
+        DetalleCarga detalleSeleccionado = null; 
+
+        // 1. PRIORIDAD ABSOLUTA: LA TABLA SELECCIONADA
+        if (tableDetalle.getSelectedRow() != -1) {
+            int viewRow = tableDetalle.getSelectedRow();
+            int modelRow = tableDetalle.convertRowIndexToModel(viewRow);
+            
+            if (modelRow >= 0 && modelRow < controlador.getListaItems().size()) {
+                detalleSeleccionado = controlador.getListaItems().get(modelRow);
+                codigo = detalleSeleccionado.getProducto().getCodigoBarra();
+            }
+        }
+
+        // 2. PRIORIDAD SECUNDARIA: EL BUSCADOR
+        if (detalleSeleccionado == null && !txtBusqueda.getText().trim().isEmpty()) {
+            String entrada = txtBusqueda.getText().trim();
+            codigo = entrada.contains("*") ? entrada.split("\\*")[1] : entrada;
+        } 
+        
+        // Validación final de seguridad
         if (codigo == null || codigo.trim().isEmpty()) { enfocarBuscador(); return; }
 
+        // ... (Resto del código de búsqueda y apertura del diálogo sigue igual) ...
         Producto p = controlador.buscarProducto(codigo);
+        
         if (p != null) {
+            if (detalleSeleccionado == null) {
+                for (DetalleCarga d : controlador.getListaItems()) {
+                    if (d.getProducto().getCodigoBarra().equals(p.getCodigoBarra())) {
+                        detalleSeleccionado = d;
+                        int indiceLista = controlador.getListaItems().indexOf(d);
+                        int indiceVista = tableDetalle.convertRowIndexToView(indiceLista);
+                        tableDetalle.setRowSelectionInterval(indiceVista, indiceVista);
+                        break;
+                    }
+                }
+            }
+
             JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-            DialogoModificarPrecio dialog = new DialogoModificarPrecio(parent, controlador.getEmpresa(), p);
+            DialogoModificarPrecio dialog = new DialogoModificarPrecio(
+                parent, 
+                controlador.getEmpresa(), 
+                p, 
+                detalleSeleccionado,
+                () -> actualizarTabla() 
+            );
             dialog.setVisible(true);
-            actualizarTabla(); 
             enfocarBuscador();
         } else {
             JOptionPane.showMessageDialog(this, "Producto no encontrado.");
             enfocarBuscador();
         }
     }
-
     private void abrirDialogoAltaRapida(String codigo) {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
         DialogoAltaProducto dialog = new DialogoAltaProducto(parent, controlador.getEmpresa(), codigo);
