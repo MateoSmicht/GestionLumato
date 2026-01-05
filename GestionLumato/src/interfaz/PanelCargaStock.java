@@ -8,6 +8,7 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.util.List;
@@ -151,6 +152,8 @@ public class PanelCargaStock extends JPanel {
                 }
             }
         });
+        
+    
 
         tableDetalle = new JTable(modeloTabla);
         tableDetalle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -205,6 +208,65 @@ public class PanelCargaStock extends JPanel {
         scrollPane.setBounds(30, 150, 935, 330); 
         scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         add(scrollPane);
+        
+     // ... (Tu código anterior del JScrollPane) ...
+        scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        add(scrollPane);
+
+        // =========================================================
+        // NUEVA CONFIGURACIÓN DE NAVEGACIÓN (EXCEL STYLE)
+        // =========================================================
+        
+        // A. Permitir que la tabla detecte "Enter" para EDITAR en vez de bajar de fila
+        InputMap im = tableDetalle.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap am = tableDetalle.getActionMap();
+
+        KeyStroke enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+
+        // Reemplazamos la acción por defecto del Enter
+        im.put(enterKey, "Action.editarCelda");
+        am.put("Action.editarCelda", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = tableDetalle.getSelectedRow();
+                int col = tableDetalle.getSelectedColumn();
+                
+                // Si la celda es editable (Costo=2, Venta=4, Cantidad=6)
+                if (col == 2 || col == 4 || col == 6) {
+                    if (row != -1) {
+                        tableDetalle.editCellAt(row, col);
+                        Component editor = tableDetalle.getEditorComponent();
+                        if (editor != null) {
+                            editor.requestFocusInWindow();
+                        }
+                    }
+                } else {
+                    // Si no es editable, que el Enter funcione como Tab (mover a la derecha)
+                    // o bajar si estamos al final.
+                    if (row < tableDetalle.getRowCount() - 1) {
+                         tableDetalle.setRowSelectionInterval(row + 1, row + 1);
+                    }
+                }
+            }
+        });
+        
+        // B. Propiedad para que guardar el cambio si el usuario hace clic afuera
+        tableDetalle.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+
+        // C. Conectar Buscador -> Tabla (Flecha Abajo)
+        txtBusqueda.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                    if (tableDetalle.getRowCount() > 0) {
+                        tableDetalle.requestFocusInWindow();
+                        // Seleccionar la primera fila y la columna de Costo (2) por defecto
+                        tableDetalle.setRowSelectionInterval(0, 0);
+                        tableDetalle.setColumnSelectionInterval(2, 2); 
+                    }
+                }
+            }
+        });
 
         // =========================================================
         // 4. FOOTER
@@ -245,6 +307,9 @@ public class PanelCargaStock extends JPanel {
         setupAtajo(KeyEvent.VK_F12, "F12", e -> confirmarOperacion());
 
         enfocarBuscador();
+        
+        
+        
     }
 
     // --- LOGICA DE NEGOCIO ---
@@ -319,14 +384,36 @@ public class PanelCargaStock extends JPanel {
                 controlador.modificarPrecioVenta(fila, nuevoPrecio);
             }
             
-            // Refrescamos para ver los recálculos (PPP azul)
-            SwingUtilities.invokeLater(this::actualizarTabla);
+         // Refrescamos la tabla y volvemos al buscador
+            SwingUtilities.invokeLater(() -> {
+                actualizarTabla();
+                
+                // --- CAMBIO AQUÍ: VOLVER AL BUSCADOR INMEDIATAMENTE ---
+                enfocarBuscador(); 
+            });
+            
+         // --- CAMBIO PARA NAVEGACIÓN FLUIDA ---
+            // Intentamos volver a poner el foco en la tabla en la misma posición
+            if (tableDetalle.getRowCount() > fila) {
+                tableDetalle.requestFocusInWindow();
+                tableDetalle.setRowSelectionInterval(fila, fila);
+                // Si editó costo(2), pasamos a venta(4). Si editó venta, a cantidad(6).
+                int nextCol = col;
+                if (col == 2) nextCol = 4;
+                else if (col == 4) nextCol = 6;
+                
+                tableDetalle.setColumnSelectionInterval(nextCol, nextCol);
+            }
             
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Valor inválido. Use números y punto para decimales.");
-            SwingUtilities.invokeLater(this::actualizarTabla); // Restaurar valor anterior
+            SwingUtilities.invokeLater(() -> {
+                actualizarTabla();
+                enfocarBuscador(); // En caso de error, también volvemos
+            });
+            
         }
-        enfocarBuscador();
+        
     }
 
     // --- MÉTODO CLAVE: MOSTRAR DATOS Y PROYECCIONES ---
