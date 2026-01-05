@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.util.List;
 
 import modelo.Empresa;
@@ -28,12 +29,12 @@ public class PanelCargaStock extends JPanel {
     private JTable tableDetalle;
     private DefaultTableModel modeloTabla;
     private JLabel lblInfoCantidad;
-    private JLabel lblTotalInfo; // Cantidad de ítems cargados
+    private JLabel lblTotalInfo; 
 
     public JButton btnVolver;
     private JButton btnModoBulto;
 
-    // Colores (Mismos que PanelVenta)
+    // Colores
     private final Color COLOR_FONDO = new Color(245, 246, 250);
     private final Color COLOR_HEADER = new Color(44, 62, 80);
     private final Color COLOR_ACCENT = new Color(52, 152, 219);
@@ -46,7 +47,6 @@ public class PanelCargaStock extends JPanel {
 
         setLayout(null);
         setBackground(COLOR_FONDO);
-        // AJUSTE HD: 1000x680
         setBounds(0, 0, 1000, 680);
 
         // =========================================================
@@ -58,7 +58,7 @@ public class PanelCargaStock extends JPanel {
         panelHeader.setBounds(0, 0, 1000, 80);
         add(panelHeader);
 
-        JLabel lblTitulo = new JLabel("REPOSICIÓN DE STOCK:");
+        JLabel lblTitulo = new JLabel("REPOSICIÓN DE STOCK (PPP):");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setBounds(30, 15, 200, 20);
@@ -84,7 +84,7 @@ public class PanelCargaStock extends JPanel {
         panelHeader.add(btnVolver);
 
         // =========================================================
-        // 2. BARRA DE HERRAMIENTAS (F5-F8)
+        // 2. BARRA DE HERRAMIENTAS
         // =========================================================
         int yBtns = 95;
         int wBtn = 160;
@@ -118,15 +118,24 @@ public class PanelCargaStock extends JPanel {
         btnBuscar.addActionListener(e -> abrirBusquedaAvanzada());
 
         // =========================================================
-        // 3. TABLA CENTRAL
+        // 3. TABLA CENTRAL (CONFIGURADA PARA PPP)
         // =========================================================
-        // Indices: 0:Cod, 1:Desc, 2:Factor, 3:Costo, 4:Venta, 5:Modo, 6:Cant(Edit), 7:StockFinal
-        String[] columnas = { "Cód.", "Descripción", "Factor", "Costo Unit.", "Precio Venta", "Modo", "Cant. Sumar", "Stock Final" };
+        String[] columnas = { 
+            "Cód.",           // 0
+            "Descripción",    // 1
+            "Costo Factura",  // 2 (EDITABLE)
+            "PPP Est.",       // 3 (Visual Azul)
+            "Precio Venta",   // 4 (EDITABLE - Verde)
+            "Modo",           // 5
+            "Cant. Sumar",    // 6 (EDITABLE)
+            "Stock Final"     // 7
+        };
         
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 6; // Solo cantidad es editable
+                // Permitimos editar Costo(2), Venta(4) y Cantidad(6)
+                return column == 2 || column == 4 || column == 6; 
             }
         };
 
@@ -134,8 +143,11 @@ public class PanelCargaStock extends JPanel {
             if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
                 int fila = e.getFirstRow();
                 int col = e.getColumn();
-                if (col == 6 && fila >= 0) {
-                    onTablaEditada(fila, col);
+                if (fila >= 0) { 
+                     // Solo reaccionamos a las columnas editables
+                    if (col == 2 || col == 4 || col == 6) { 
+                        onTablaEditada(fila, col);
+                    }
                 }
             }
         });
@@ -154,33 +166,48 @@ public class PanelCargaStock extends JPanel {
         header.setForeground(Color.WHITE);
         header.setOpaque(true);
 
-        // Alineación Centrada
+        // Alineación y Renderers
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        tableDetalle.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // Cod
-        tableDetalle.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Factor
-        tableDetalle.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); // Modo
-        tableDetalle.getColumnModel().getColumn(6).setCellRenderer(centerRenderer); // Cant
-        tableDetalle.getColumnModel().getColumn(7).setCellRenderer(centerRenderer); // Stock
+        
+        tableDetalle.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); 
+        tableDetalle.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); 
+        
+        // PPP (Azul)
+        DefaultTableCellRenderer pppRenderer = new DefaultTableCellRenderer();
+        pppRenderer.setHorizontalAlignment(JLabel.CENTER);
+        pppRenderer.setForeground(new Color(41, 128, 185)); 
+        pppRenderer.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tableDetalle.getColumnModel().getColumn(3).setCellRenderer(pppRenderer);
 
-        // Anchos de Columna (Optimizados para 1000px)
-        tableDetalle.getColumnModel().getColumn(0).setPreferredWidth(100);
-        tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(300); // Desc
-        tableDetalle.getColumnModel().getColumn(2).setPreferredWidth(50);  // Factor
-        tableDetalle.getColumnModel().getColumn(3).setPreferredWidth(80);
-        tableDetalle.getColumnModel().getColumn(4).setPreferredWidth(80);
+        // Precio Venta (Verde)
+        DefaultTableCellRenderer ventaRenderer = new DefaultTableCellRenderer();
+        ventaRenderer.setHorizontalAlignment(JLabel.CENTER);
+        ventaRenderer.setForeground(new Color(39, 174, 96)); 
+        ventaRenderer.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tableDetalle.getColumnModel().getColumn(4).setCellRenderer(ventaRenderer);
+
+        tableDetalle.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
+        tableDetalle.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
+        tableDetalle.getColumnModel().getColumn(7).setCellRenderer(centerRenderer);
+
+        // Anchos
+        tableDetalle.getColumnModel().getColumn(0).setPreferredWidth(90);  // Cód
+        tableDetalle.getColumnModel().getColumn(1).setPreferredWidth(280); // Desc
+        tableDetalle.getColumnModel().getColumn(2).setPreferredWidth(80);  // Costo
+        tableDetalle.getColumnModel().getColumn(3).setPreferredWidth(80);  // PPP
+        tableDetalle.getColumnModel().getColumn(4).setPreferredWidth(90);  // Venta
         tableDetalle.getColumnModel().getColumn(5).setPreferredWidth(70);  // Modo
         tableDetalle.getColumnModel().getColumn(6).setPreferredWidth(70);  // Cant
         tableDetalle.getColumnModel().getColumn(7).setPreferredWidth(80);  // Stock
 
         JScrollPane scrollPane = new JScrollPane(tableDetalle);
-        // Altura 330 para dejar espacio al footer
         scrollPane.setBounds(30, 150, 935, 330); 
         scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         add(scrollPane);
 
         // =========================================================
-        // 4. PANEL INFERIOR (FOOTER)
+        // 4. FOOTER
         // =========================================================
         JPanel panelFooter = new JPanel();
         panelFooter.setLayout(null);
@@ -189,14 +216,12 @@ public class PanelCargaStock extends JPanel {
         panelFooter.setBorder(new LineBorder(new Color(220, 220, 220), 1));
         add(panelFooter);
 
-        // Texto Izquierda: Resumen
         lblTotalInfo = new JLabel("Ítems a cargar: 0");
         lblTotalInfo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTotalInfo.setForeground(Color.GRAY);
         lblTotalInfo.setBounds(40, 30, 300, 30);
         panelFooter.add(lblTotalInfo);
 
-        // Botón Confirmar (Derecha)
         JButton btnConfirmar = new JButton("<html><center><font size=5>CONFIRMAR</font><br><font size=3>(F12)</font></center></html>");
         btnConfirmar.setBounds(750, 10, 220, 70);
         btnConfirmar.setBackground(COLOR_VERDE);
@@ -205,7 +230,7 @@ public class PanelCargaStock extends JPanel {
         btnConfirmar.setFocusPainted(false);
         btnConfirmar.setBorderPainted(true);
         btnConfirmar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnConfirmar.setBorder(BorderFactory.createMatteBorder(0, 0, 4, 0, new Color(30, 132, 73))); // Efecto 3D
+        btnConfirmar.setBorder(BorderFactory.createMatteBorder(0, 0, 4, 0, new Color(30, 132, 73)));
         btnConfirmar.addActionListener(e -> confirmarOperacion());
         panelFooter.add(btnConfirmar);
 
@@ -235,7 +260,7 @@ public class PanelCargaStock extends JPanel {
             txtBusqueda.setText("");
         } catch (Exception e) {
             // Manejo de "No encontrado" -> Alta Rápida
-            if (e.getMessage().toLowerCase().contains("no encontrado")) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no encontrado")) {
                 String codigoLimpio = entrada.contains("*") ? entrada.split("\\*")[1] : entrada;
                 int resp = JOptionPane.showConfirmDialog(this, 
                         "El producto '" + codigoLimpio + "' no existe.\n¿Crearlo ahora?", 
@@ -273,6 +298,68 @@ public class PanelCargaStock extends JPanel {
             enfocarBuscador();
         }
     }
+
+    // --- MÉTODO CLAVE: GESTIONAR EDICIÓN DE TABLA (COSTO / PRECIO / CANTIDAD) ---
+    private void onTablaEditada(int fila, int col) {
+        try {
+            Object valor = modeloTabla.getValueAt(fila, col);
+            // Limpieza básica para evitar error con el signo $ o comas
+            String strValor = valor.toString().replace("$", "").replace(",", "."); 
+            
+            if (col == 6) { // COLUMNA CANTIDAD
+                int nuevaCant = Integer.parseInt(strValor);
+                controlador.modificarCantidad(fila, nuevaCant);
+            } 
+            else if (col == 2) { // COLUMNA COSTO (Nuevo)
+                BigDecimal nuevoCosto = new BigDecimal(strValor);
+                controlador.modificarCostoEntrada(fila, nuevoCosto);
+            }
+            else if (col == 4) { // COLUMNA PRECIO VENTA (Nuevo)
+                BigDecimal nuevoPrecio = new BigDecimal(strValor);
+                controlador.modificarPrecioVenta(fila, nuevoPrecio);
+            }
+            
+            // Refrescamos para ver los recálculos (PPP azul)
+            SwingUtilities.invokeLater(this::actualizarTabla);
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Valor inválido. Use números y punto para decimales.");
+            SwingUtilities.invokeLater(this::actualizarTabla); // Restaurar valor anterior
+        }
+        enfocarBuscador();
+    }
+
+    // --- MÉTODO CLAVE: MOSTRAR DATOS Y PROYECCIONES ---
+    private void actualizarTabla() {
+        modeloTabla.setRowCount(0);
+        List<DetalleCarga> lista = controlador.getListaItems();
+        
+        for (DetalleCarga item : lista) {
+            int aSumar = item.getUnidadesReales();
+            
+            // 1. Pedimos al controlador la proyección del PPP (Promedio)
+            BigDecimal valorPPP = controlador.calcularProyeccionPPP(item);
+            String pppTexto = "$" + valorPPP.toString();
+            
+            // 2. Mostramos los valores TEMPORALES del item (los que está editando el usuario)
+            String costoTexto = item.getCostoNuevo().toString();
+            String ventaTexto = item.getPrecioVenta().toString();
+
+            modeloTabla.addRow(new Object[] {
+                item.getCodigoLeido(),
+                item.getProducto().getDescripcion(),
+                costoTexto,   // Costo Editable
+                pppTexto,     // PPP Calculado (Azul)
+                ventaTexto,   // Venta Editable (Verde)
+                item.isEsBulto() ? "BULTO" : "UNIDAD",
+                item.getCantidad(),
+                item.getProducto().getCantidadStock() + aSumar 
+            });
+        }
+        lblTotalInfo.setText("Ítems a cargar: " + lista.size());
+    }
+
+    // --- RESTO DE MÉTODOS DE BÚSQUEDA Y DIÁLOGOS ---
 
     private void abrirBusquedaAvanzada() {
         String texto = JOptionPane.showInputDialog(this, "Nombre del producto:", "Buscar Stock (F5)", JOptionPane.QUESTION_MESSAGE);
@@ -316,10 +403,9 @@ public class PanelCargaStock extends JPanel {
         Producto p = controlador.buscarProducto(codigo);
         if (p != null) {
             JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-            // Reutilizamos DialogoModificarPrecio
             DialogoModificarPrecio dialog = new DialogoModificarPrecio(parent, controlador.getEmpresa(), p);
             dialog.setVisible(true);
-            actualizarTabla(); // Actualizar por si cambió precios
+            actualizarTabla(); 
             enfocarBuscador();
         } else {
             JOptionPane.showMessageDialog(this, "Producto no encontrado.");
@@ -329,7 +415,6 @@ public class PanelCargaStock extends JPanel {
 
     private void abrirDialogoAltaRapida(String codigo) {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        // Asumimos que DialogoAltaProducto existe y funciona como antes
         DialogoAltaProducto dialog = new DialogoAltaProducto(parent, controlador.getEmpresa(), codigo);
         dialog.setVisible(true);
         
@@ -343,41 +428,6 @@ public class PanelCargaStock extends JPanel {
             } catch (Exception ex) { ex.printStackTrace(); }
         }
         enfocarBuscador();
-    }
-
-    // --- Helpers UI y Tablas ---
-
-    private void onTablaEditada(int fila, int col) {
-        try {
-            Object valor = modeloTabla.getValueAt(fila, col);
-            int nuevaCant = Integer.parseInt(valor.toString());
-            controlador.modificarCantidad(fila, nuevaCant);
-            SwingUtilities.invokeLater(this::actualizarTabla);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Ingrese solo números enteros.");
-            actualizarTabla();
-        } catch (Exception e) { }
-        enfocarBuscador();
-    }
-
-    private void actualizarTabla() {
-        modeloTabla.setRowCount(0);
-        List<DetalleCarga> lista = controlador.getListaItems();
-        
-        for (DetalleCarga item : lista) {
-            int aSumar = item.getUnidadesReales();
-            modeloTabla.addRow(new Object[] {
-                item.getCodigoLeido(),
-                item.getProducto().getDescripcion(),
-                item.getProducto().getFactor(),
-                "$" + item.getProducto().getPrecioCosto(),
-                "$" + item.getProducto().calcularPrecioFinal(),
-                item.isEsBulto() ? "BULTO" : "UNIDAD",
-                item.getCantidad(),
-                item.getProducto().getCantidadStock() + aSumar 
-            });
-        }
-        lblTotalInfo.setText("Ítems a cargar: " + lista.size());
     }
 
     private void eliminarItemSeleccionado() {

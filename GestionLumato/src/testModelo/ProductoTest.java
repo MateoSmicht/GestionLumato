@@ -34,6 +34,8 @@ class ProductoTest {
             new BigDecimal("0.50"),   // Ganancia (50%)
             new BigDecimal("0.21")    // IVA (21%)
         );
+        
+      
     }
 
     @Test

@@ -131,10 +131,12 @@ public class PanelPrecios extends JPanel {
         if (chkPrecioManual.isSelected()) {
             // Manual: Calculamos Ganancia
             String ganancia = controlador.calcularPorcentajeGanancia(costo, txtPrecioFinal.getText());
+            System.out.println(ganancia);
             txtGanancia.setText(ganancia);
         } else {
             // Auto: Calculamos Precio
             String precio = controlador.calcularPrecioVenta(costo, txtGanancia.getText(), iva);
+            System.out.println(precio);
             txtPrecioFinal.setText(precio);
         }
     }
@@ -158,6 +160,8 @@ public class PanelPrecios extends JPanel {
         // 3. Recalcular
         actualizarCalculos();
     }
+    
+    
 
     // --- GETTERS Y SETTERS (Para sacar y meter datos) ---
 

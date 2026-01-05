@@ -15,6 +15,7 @@ public class Producto {
     private String nombreUnidad; 
     private int factor;          
     private BigDecimal precioCosto;
+    private BigDecimal ppp;
     private BigDecimal porcentajeGanancia;
     private BigDecimal alicuotaIVA;
     private List<String> codigosSecundarios;
@@ -30,6 +31,7 @@ public class Producto {
         this.nombreUnidad = nombreUnidad;
         this.factor = (factor > 0) ? factor : 1; 
         this.precioCosto = precioCosto;
+        this.ppp = precioCosto;
         this.porcentajeGanancia = porcentajeGanancia;
         this.alicuotaIVA = alicuotaIVA;
         this.cantidadStock = 0;
@@ -37,17 +39,24 @@ public class Producto {
     }
     
     
-    
+    //Dado porcenje de ganancia calcula el precio final de venta.
     public BigDecimal calcularPrecioFinal() {
-        BigDecimal ganancia = this.precioCosto.multiply(this.porcentajeGanancia);
-        BigDecimal precioNeto = this.precioCosto.add(ganancia);
-        BigDecimal valorIVA = precioNeto.multiply(this.alicuotaIVA);
-        return precioNeto.add(valorIVA).setScale(2, RoundingMode.HALF_UP);
+        try {
+            BigDecimal costo = this.precioCosto;
+            BigDecimal porcentajeGanancia = this.porcentajeGanancia;
+            BigDecimal alicuotaIVA = this.alicuotaIVA;
+
+            BigDecimal gananciaDinero = costo.multiply(porcentajeGanancia);
+            BigDecimal precioNeto = costo.add(gananciaDinero);
+            BigDecimal ivaDinero = precioNeto.multiply(alicuotaIVA);
+            
+            return precioNeto.add(ivaDinero).setScale(2, RoundingMode.HALF_UP);
+        } catch (NumberFormatException | ArithmeticException e) {
+            return BigDecimal.ZERO; // Si faltan datos o son inválidos
+        }
     }
     
-    // --- LÓGICA DE STOCK FLEXIBLE ---
-    
-    
+ 
     public void agregarStock(int cantidad, boolean esPorBulto) {
         if (cantidad > 0) {
             int cantidadReal;
@@ -117,6 +126,16 @@ public class Producto {
         return codigosSecundarios;
     }
     
+    public BigDecimal getPpp() {
+        return (ppp != null) ? ppp : precioCosto;
+    }
+
+    public void setPpp(BigDecimal ppp) {
+        this.ppp = ppp;
+    }
+    public void setCantidadStock(int cStock) {
+        this.cantidadStock = cStock;
+    }
     
     public void setPrecioCosto(BigDecimal precioCosto) { this.precioCosto = precioCosto; }
     public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) { this.porcentajeGanancia = porcentajeGanancia; }

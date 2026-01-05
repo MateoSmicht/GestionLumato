@@ -6,6 +6,7 @@ import interfaz.MainForm; // <--- Importamos el Menú Principal directo
 
 public class Main {
     public static void main(String[] args) {
+    	
         Empresa miNegocio = new Empresa("Gestion Lumato V");
 
         // ... carga de productos ...
@@ -38,7 +39,7 @@ public class Main {
         miNegocio.agregarUsuario(admin);
         
         miNegocio.agregarUsuario(new Cajero("Micaela", "123", "Micaela sanchez"));
-
+        
         // Iniciar Ventana DIRECTO AL MENU (Bypass Login)
         EventQueue.invokeLater(() -> {
             try {
