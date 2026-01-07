@@ -59,4 +59,4 @@ El código está estructurado para desacoplar responsabilidades:
 
 
 ---
-*Proyecto desarrollado con fines profesionales y educativos.*
+*Proyecto personal desarrollado con fines profesionales y educativos.*
