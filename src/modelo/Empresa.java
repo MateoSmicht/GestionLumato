@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 public class Empresa {
 	private String nombre;
-	private Map<String, Producto> stock; // Clave: Código de Barra
-	private Map<String, Usuario> usuarios; // Clave: Username
+	private Map<String, Producto> stock; 
+	private Map<String, Usuario> usuarios; 
 	private List<Venta> historialVentas;
 	private Map<String, Venta> ventasPendientes;
 	private Map<Integer, Categoria> categorias;
@@ -54,10 +54,7 @@ public class Empresa {
 
 	public void modificarCategoria(Categoria categoria, String nuevoNombre) {
 		String nombreNormalizado = nuevoNombre.trim();
-
-		// Validar que no exista OTRA categoría con ese nombre
 		for (Categoria c : categorias.values()) {
-			// Si tiene el mismo nombre PERO es un ID distinto, es un duplicado prohibido
 			if (c.getNombre().equalsIgnoreCase(nombreNormalizado) && c.getId() != categoria.getId()) {
 				throw new IllegalArgumentException("Ya existe otra categoría llamada '" + nuevoNombre + "'.");
 			}
@@ -101,17 +98,17 @@ public class Empresa {
 		}
 		return false;
 	}
-	
+
 	public String proximoCodigoDisponible() {
-        int contador = obtenerTodoElStock() + 1;
-        
-        String candidato = String.valueOf(contador);
-        while (existeCodigoInterno(candidato)) {
-            contador++; // Probamos con el siguiente (ej: de 101 pasa a 102)
-            candidato = String.valueOf(contador); // Actualizamos el string candidato
-        }
-        return candidato;
-    }
+		int contador = obtenerTodoElStock() + 1;
+
+		String candidato = String.valueOf(contador);
+		while (existeCodigoInterno(candidato)) {
+			contador++; 
+			candidato = String.valueOf(contador); 
+		}
+		return candidato;
+	}
 
 	public boolean elProductoYaEstaCargado(String codigoBarra) {
 		return stock.containsKey(codigoBarra);
@@ -128,40 +125,27 @@ public class Empresa {
 		return null;
 	}
 
-	// -----------------------------------------------------------
-	// LÓGICA DE VALIDACIÓN Y ELIMINACIÓN (EN EMPRESA.JAVA)
-	// -----------------------------------------------------------
-
-	/**
-	 * Verifica si una categoría se puede borrar mirando IDs.
-	 */
 	public boolean categoriaEstaEnUso(Categoria cat) {
 		int idParaBorrar = cat.getId();
-
-		// 1. REVISAR SI TIENE SUBCATEGORÍAS (HIJAS)
 		for (Categoria c : this.categorias.values()) {
-			// Si c tiene un padre, y ese padre es el que queremos borrar...
 			if (c.getIdPadre() != null && c.getIdPadre() == idParaBorrar) {
-				return true; // No se puede borrar, tiene hijas.
+				return true;
 			}
 		}
-
-		return false; // Está limpia, se puede borrar.
+		return false; 
 	}
 
 	public boolean categoriaTieneProductos(Categoria cat) {
 		int idParaBorrar = cat.getId();
 		for (Producto p : this.stock.values()) {
 			if (p.getCategoria() != null && p.getCategoria().getId() == idParaBorrar) {
-				return true; // No se puede borrar, tiene productos.
+				return true; 
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * Elimina la categoría buscando por ID para evitar errores de referencia.
-	 */
+	
 	public void eliminarCategoria(Categoria c) {
 		this.categorias.remove(c.getId());
 	}
@@ -223,23 +207,17 @@ public class Empresa {
 	}
 
 	public Categoria buscarCategoriaPorNombre(String nombre) {
-		// 1. Validación básica
 		if (nombre == null || nombre.trim().isEmpty()) {
 			return null;
 		}
 
-		String nombreBuscado = nombre.trim(); // Quitamos espacios adelante/atrás
+		String nombreBuscado = nombre.trim();
 
-		// 2. Recorremos el mapa de categorías (asumiendo que usas Map<Integer,
-		// Categoria>)
 		for (Categoria c : categorias.values()) {
-			// Comparamos ignorando mayúsculas (asi "bebidas" encuentra "Bebidas")
 			if (c.getNombre().equalsIgnoreCase(nombreBuscado)) {
 				return c;
 			}
 		}
-
-		// 3. Si terminamos el bucle y no apareció
 		return null;
 	}
 
@@ -250,7 +228,7 @@ public class Empresa {
 		if (principal == null || duplicado == null) {
 			throw new Exception("Uno de los productos no existe.");
 		}
-		if (principal == duplicado) { // Comparan referencia de memoria
+		if (principal == duplicado) { 
 			throw new Exception("¡Son el mismo producto! No se pueden unificar.");
 		}
 
@@ -271,16 +249,11 @@ public class Empresa {
 			stock.put(alias, principal);
 		}
 
-		// 4. EL PASO CLAVE: Re-apuntamos el código del duplicado al objeto principal
+		// 4. Re-apuntamos el código del duplicado al objeto principal
 		stock.put(codDuplicado, principal);
-
-		// Ahora 'stock.get(codDuplicado)' devuelve el objeto 'principal'.
-		// El objeto 'duplicado' viejo queda sin referencias y el recolector de basura
-		// lo borra.
 	}
 
 	public void borrarCodigoSecundario(Producto producto, String codigoABorrar) {
-		// 1. Lo sacamos de la lista interna del producto
 		producto.getCodigosSecundarios().remove(codigoABorrar);
 		stock.remove(codigoABorrar);
 	}
@@ -290,7 +263,6 @@ public class Empresa {
 	}
 
 	public boolean validarNumero(String texto) {
-		// 1. Chequeamos si es null O si esta vacío O si NO son digitos
 		if (texto == null || texto.trim().isEmpty() || !texto.matches("\\d+")) {
 			return true;
 		}
@@ -302,12 +274,10 @@ public class Empresa {
 	}
 
 	public void setVentaPendiente(Usuario u, Venta v) {
-		// Guardamos la venta en el casillero de ESTE usuario
 		this.ventasPendientes.put(u.getUsername(), v);
 	}
 
 	public Venta getVentaPendiente(Usuario u) {
-		// Recuperamos solo la de ESTE usuario
 		return this.ventasPendientes.get(u.getUsername());
 	}
 
@@ -316,7 +286,6 @@ public class Empresa {
 	}
 
 	public boolean hayVentaPendiente(Usuario u) {
-		// Verificamos si existe y si tiene ítems
 		Venta v = this.ventasPendientes.get(u.getUsername());
 		return v != null && !v.getItems().isEmpty();
 	}
