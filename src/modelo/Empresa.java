@@ -101,6 +101,17 @@ public class Empresa {
 		}
 		return false;
 	}
+	
+	public String proximoCodigoDisponible() {
+        int contador = obtenerTodoElStock() + 1;
+        
+        String candidato = String.valueOf(contador);
+        while (existeCodigoInterno(candidato)) {
+            contador++; // Probamos con el siguiente (ej: de 101 pasa a 102)
+            candidato = String.valueOf(contador); // Actualizamos el string candidato
+        }
+        return candidato;
+    }
 
 	public boolean elProductoYaEstaCargado(String codigoBarra) {
 		return stock.containsKey(codigoBarra);

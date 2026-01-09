@@ -106,23 +106,23 @@ public class ControladorStock {
             if (strCosto == null || strCosto.isEmpty()) return "0";
             if (strPrecioFinal == null || strPrecioFinal.isEmpty()) return "0";
 
-            java.math.BigDecimal costo = new java.math.BigDecimal(strCosto.replace(",", "."));
-            java.math.BigDecimal precioFinal = new java.math.BigDecimal(strPrecioFinal.replace(",", "."));
-            java.math.BigDecimal iva = new java.math.BigDecimal("1.0"); 
+            BigDecimal costo = new java.math.BigDecimal(strCosto.replace(",", "."));
+            BigDecimal precioFinal = new java.math.BigDecimal(strPrecioFinal.replace(",", "."));
+            BigDecimal iva = new java.math.BigDecimal("1.0"); 
 
             // Evitamos división por cero
-            if (costo.compareTo(java.math.BigDecimal.ZERO) == 0) return "0";
+            if (costo.compareTo(BigDecimal.ZERO) == 0) return "0";
 
             // 1. Costo con IVA
-            java.math.BigDecimal costoConIVA = costo.multiply(iva);
+            BigDecimal costoConIVA = costo.multiply(iva);
             
             // 2. División (Precio / CostoConIVA) - 1
-            java.math.BigDecimal gananciaDecimal = precioFinal
+           BigDecimal gananciaDecimal = precioFinal
                 .divide(costoConIVA, 4, java.math.RoundingMode.HALF_UP)
-                .subtract(java.math.BigDecimal.ONE);
+                .subtract(BigDecimal.ONE);
             
             // 3. Multiplicar por 100 para porcentaje
-            return gananciaDecimal.multiply(new java.math.BigDecimal("100"))
+            return gananciaDecimal.multiply(new BigDecimal("100"))
                 .setScale(2, java.math.RoundingMode.HALF_UP)
                 .toString();
 
@@ -191,19 +191,10 @@ public class ControladorStock {
     
     
     private String generarCodigoInterno() {
-        int contador = empresa.obtenerTodoElStock() + 1;
-        
-        String candidato = String.valueOf(contador);
-        while (empresa.existeCodigoInterno(candidato)) {
-            contador++; // Probamos con el siguiente (ej: de 101 pasa a 102)
-            candidato = String.valueOf(contador); // Actualizamos el string candidato
-        }
-        return candidato;
+    	String codigoInterno= empresa.proximoCodigoDisponible();
+       return  codigoInterno;
     }
-    /**
-     * Modifica un producto existente. 
-     * Si el código cambia, elimina el anterior y crea uno nuevo.
-     */
+    
     public void modificarProductoCompleto(String codigoOriginal, String nuevoCodigo, String descripcion, 
                                           Categoria categoria, String costo, String ganancia, String iva, 
                                           String unidad, String factor, String stock) throws Exception {

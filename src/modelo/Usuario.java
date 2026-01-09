@@ -15,6 +15,14 @@ public abstract class Usuario {
         this.nombreCompleto = nombreCompleto;
         this.funcionesPermitidas = new HashSet<>();
     }
+    
+    public void agregarPermiso(Funcion funcion) {
+        this.funcionesPermitidas.add(funcion);
+    }
+
+    public void quitarPermiso(Funcion funcion) {
+        this.funcionesPermitidas.remove(funcion);
+    }
 
     public boolean puede(Funcion funcion) {
         return this.funcionesPermitidas.contains(funcion);
@@ -36,6 +44,19 @@ public abstract class Usuario {
 
 	public void setFuncionesPermitidas(Set<Funcion> funcionesPermitidas) {
 		this.funcionesPermitidas = funcionesPermitidas;
+	}
+	@Override
+	public boolean equals(Object o) {
+	    if (this == o) return true;
+	    if (o == null || getClass() != o.getClass()) return false;
+	    Usuario usuario = (Usuario) o;
+	    // La identidad del usuario es su USERNAME (debe ser único)
+	    return username != null && username.equals(usuario.username);
+	}
+
+	@Override
+	public int hashCode() {
+	    return username != null ? username.hashCode() : 0;
 	}
 
 	@Override

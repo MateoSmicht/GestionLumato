@@ -58,40 +58,50 @@ public class Producto {
     
  
     public void agregarStock(int cantidad, boolean esPorBulto) {
-        if (cantidad > 0) {
-            int cantidadReal;
-            
-            if (esPorBulto) {
-                // Entran cajas: multiplicamos por el factor
-                cantidadReal = cantidad * this.factor; 
-            } else {
-                // Entran sueltos: sumamos directo
-                cantidadReal = cantidad;
-            }
-            
+        int cantidadReal = calcularCantidadReal(cantidad, esPorBulto);
+
+        if (cantidadReal > 0) {
             this.cantidadStock += cantidadReal;
         }
     }
+
+    private int calcularCantidadReal(int cantidad, boolean esPorBulto) {
+        if (cantidad <= 0) return 0;
+        return esPorBulto ? (cantidad * this.factor) : cantidad;
+    }
     
-    /**
-     * Descuenta stock (Venta).
-     * @param cantidadVenta: Cuánto sale.
-     * @param esPorBulto: TRUE si vendés la caja cerrada, FALSE si vendés unidad suelta.
-     */
+   
+    public boolean coincideCon(String textoBusqueda) {
+        if (textoBusqueda == null || textoBusqueda.isEmpty()) return false;
+        
+        String texto = textoBusqueda.toUpperCase().trim();
+        
+        // 1. Chequeo Código Interno
+        if (this.codigoInterno.equalsIgnoreCase(texto)) return true;
+        
+        // 2. Chequeo Código de Barra
+        if (this.codigoBarra != null && this.codigoBarra.equalsIgnoreCase(texto)) return true;
+        
+        // 3. Chequeo Descripción (Contiene)
+        if (this.descripcion.toUpperCase().contains(texto)) return true;
+        
+        // 4. Chequeo Códigos Secundarios
+        for (String sec : this.codigosSecundarios) {
+            if (sec.equalsIgnoreCase(texto)) return true;
+        }
+        
+        return false;
+    }
+    
+    public boolean tieneStockSuficiente(int cantidad, boolean esPorBulto) {
+        return this.cantidadStock >= calcularCantidadReal(cantidad, esPorBulto);
+    }
+
     public void descontarStock(int cantidadVenta, boolean esPorBulto) {
-        int cantidadReal;
-        
-        if (esPorBulto) {
-            cantidadReal = cantidadVenta * this.factor;
-        } else {
-            cantidadReal = cantidadVenta;
+        if (!tieneStockSuficiente(cantidadVenta, esPorBulto)) {
+            throw new IllegalArgumentException("Stock insuficiente.");
         }
-        
-        if (cantidadReal <= this.cantidadStock) {
-            this.cantidadStock -= cantidadReal;
-        } else {
-            throw new IllegalArgumentException("Stock insuficiente. Faltan unidades.");
-        }
+        this.cantidadStock -= calcularCantidadReal(cantidadVenta, esPorBulto);
     }
     
     public void agregarCodigoSecundario(String codigo) {
@@ -101,45 +111,93 @@ public class Producto {
     }
     
     
-    // ... (Getters y toString iguales) ...
-    public String getCodigoInterno() { return codigoInterno; }
-    public String getCodigoBarra() { return codigoBarra; }
-    public String getDescripcion() { return descripcion; }
-    public int getCantidadStock() { return cantidadStock; }
-    public String getNombreUnidad() { return nombreUnidad; }
-    public int getFactor() { return factor; }
-    public BigDecimal getPrecio() {
-    	return this.calcularPrecioFinal();
-    }
-    public BigDecimal getPrecioCosto() {
-    	return this.precioCosto;
-    }
-    public BigDecimal getPorcentajeGanancia() {
-    	return this.porcentajeGanancia;
-    }
-    public BigDecimal getAlicuotaIVA() {
-    	return this.alicuotaIVA;
-    }
-    public Categoria getCategoria() { return categoria;}
-    
-    public List<String> getCodigosSecundarios() {
-        return codigosSecundarios;
-    }
-    
-    public BigDecimal getPpp() {
-        return (ppp != null) ? ppp : precioCosto;
-    }
+	// ... (Getters y toString iguales) ...
+	public String getCodigoInterno() {
+		return codigoInterno;
+	}
 
-    public void setPpp(BigDecimal ppp) {
-        this.ppp = ppp;
-    }
-    public void setCantidadStock(int cStock) {
-        this.cantidadStock = cStock;
-    }
-    
-    public void setPrecioCosto(BigDecimal precioCosto) { this.precioCosto = precioCosto; }
-    public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) { this.porcentajeGanancia = porcentajeGanancia; }
-    public void setAlicuotaIVA(BigDecimal alicuotaIVA) { this.alicuotaIVA = alicuotaIVA; }
+	public String getCodigoBarra() {
+		return codigoBarra;
+	}
+
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	public int getCantidadStock() {
+		return cantidadStock;
+	}
+
+	public String getNombreUnidad() {
+		return nombreUnidad;
+	}
+
+	public int getFactor() {
+		return factor;
+	}
+
+	public BigDecimal getPrecio() {
+		return this.calcularPrecioFinal();
+	}
+
+	public BigDecimal getPrecioCosto() {
+		return this.precioCosto;
+	}
+
+	public BigDecimal getPorcentajeGanancia() {
+		return this.porcentajeGanancia;
+	}
+
+	public BigDecimal getAlicuotaIVA() {
+		return this.alicuotaIVA;
+	}
+
+	public Categoria getCategoria() {
+		return categoria;
+	}
+
+	public List<String> getCodigosSecundarios() {
+		return codigosSecundarios;
+	}
+
+	public BigDecimal getPpp() {
+		return (ppp != null) ? ppp : precioCosto;
+	}
+
+	public void setPpp(BigDecimal ppp) {
+		this.ppp = ppp;
+	}
+
+	public void setCantidadStock(int cStock) {
+		this.cantidadStock = cStock;
+	}
+
+	public void setPrecioCosto(BigDecimal precioCosto) {
+		this.precioCosto = precioCosto;
+	}
+
+	public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) {
+		this.porcentajeGanancia = porcentajeGanancia;
+	}
+
+	public void setAlicuotaIVA(BigDecimal alicuotaIVA) {
+		this.alicuotaIVA = alicuotaIVA;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+	    if (this == o) return true;
+	    if (o == null || getClass() != o.getClass()) return false;
+	    Producto producto = (Producto) o;
+	    // Dos productos son iguales si tienen el mismo código interno
+	    return codigoInterno != null && codigoInterno.equals(producto.codigoInterno);
+	}
+
+	@Override
+	public int hashCode() {
+	    // Genera un número único basado en el código
+	    return codigoInterno != null ? codigoInterno.hashCode() : 0;
+	}
 
     @Override
     public String toString() {

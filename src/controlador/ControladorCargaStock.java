@@ -21,18 +21,11 @@ public class ControladorCargaStock {
 		this.controladorStock = new ControladorStock(empresa);
 	}
 
-	// --- YA NO EXISTE LA CLASE INTERNA AQUÍ ---
-
-	// Método buscar para el F6
 	public Producto buscarProducto(String codigo) {
 		return empresa.buscarProducto(codigo);
 	}
 
-	public Empresa getEmpresa() {
-		return empresa;
-	}
-
-// EN TUS MÉTODOS DE AGREGAR:
+	
 
 	public void agregarItem(String entrada, boolean modoBulto) throws Exception {
 		if (entrada.isEmpty())
@@ -120,9 +113,6 @@ public class ControladorCargaStock {
 		);
 	}
 
-	// EN ControladorCargaStock.java
-
-	// EN ControladorCargaStock.java
 
 private void actualizarProductoCompleto(Producto p, int cantidadNueva, BigDecimal nuevoCosto, BigDecimal nuevoPrecioVenta) {
         
@@ -147,18 +137,9 @@ private void actualizarProductoCompleto(Producto p, int cantidadNueva, BigDecima
             nuevoCosto, 
             nuevoPrecioVenta
         );
-        
-        // --- CORRECCIÓN: PRIMERO GUARDAMOS, DESPUÉS IMPRIMIMOS ---
+ 
         p.setPorcentajeGanancia(porcentajeCorrecto);
-        // ---------------------------------------------------------
-
-        // Ahora sí, el print mostrará el precio actualizado con el nuevo %
-        System.out.println("--- DEBUG ---");
-        System.out.println("Nuevo % Calculado: " + porcentajeCorrecto);
-        System.out.println("Costo Nuevo: " + nuevoCosto);
-        System.out.println("Venta Deseada: " + nuevoPrecioVenta);
-        System.out.println("Precio Final (Producto): " + p.calcularPrecioFinal()); 
-    }
+}
 
 
     public void confirmarCargaMasiva() {
@@ -205,5 +186,9 @@ private void actualizarProductoCompleto(Producto p, int cantidadNueva, BigDecima
 		Producto p = item.getProducto();
 		return CalculadoraCostos.calcularNuevoPPP(new BigDecimal(Math.max(0, p.getCantidadStock())), p.getPpp(),
 				new BigDecimal(item.getUnidadesReales()), item.getCostoNuevo());
+	}
+	
+	public Empresa getEmpresa() {
+		return empresa;
 	}
 }
