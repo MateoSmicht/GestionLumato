@@ -31,7 +31,18 @@ public abstract class Usuario {
     public boolean validarPassword(String passwordIngresada) {
         return this.password.equals(passwordIngresada);
     }
-
+    
+    public boolean cambiarPassword(String passwordActual, String nuevaPassword) {
+        // Solo permitimos el cambio si conoce su clave actual
+        if (validarPassword(passwordActual)) {
+            // Validación extra: Que la nueva no sea vacía
+            if (nuevaPassword != null && !nuevaPassword.trim().isEmpty()) {
+                this.password = nuevaPassword;
+                return true; // Cambio exitoso
+            }
+        }
+        return false; 
+    }
     public abstract String getNombreRol();
 
     public String getUsername() { return username; }
