@@ -9,43 +9,51 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import controlador.ControladorCategoria; // <--- NUEVO
+import controlador.ControladorStock;     // <--- NUEVO
 import modelo.Categoria;
-import modelo.Empresa;
 import modelo.Producto;
 
 public class PanelConsultaStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private Empresa empresa;
+    
+    // --- NUEVAS DEPENDENCIAS (Los Cerebros) ---
+    private ControladorStock ctrlStock;
+    private ControladorCategoria ctrlCategoria;
+    
     private Set<String> codigosOcultos = new HashSet<>(); 
 
     private DefaultTableModel modeloTabla;
     private JTable tabla;
     
-    // --- NUEVOS FILTROS EN CASCADA ---
+    // --- FILTROS ---
     private JTextField txtBuscador;
-    private JComboBox<Object> cmbCatMadre; // Combo Padre
-    private JComboBox<Object> cmbSubCat;   // Combo Hijo
+    private JComboBox<Object> cmbCatMadre; 
+    private JComboBox<Object> cmbSubCat;   
     private JTextField txtStockMaximo;
     private JLabel lblContador;
     
     private int limiteAlertaRojo = 10;
 
-    public PanelConsultaStock(Empresa empresa) {
-        this.empresa = empresa;
+    // CONSTRUCTOR: Ahora pide LOS DOS controladores
+    public PanelConsultaStock(ControladorStock ctrlStock, ControladorCategoria ctrlCategoria) {
+        this.ctrlStock = ctrlStock;
+        this.ctrlCategoria = ctrlCategoria;
+        
         setLayout(new BorderLayout());
         setBackground(new Color(245, 246, 250));
 
         // =================================================
         // 1. PANEL SUPERIOR (FILTROS)
         // =================================================
-        JPanel panelFiltros = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15)); // Menos espacio horizontal (10)
+        JPanel panelFiltros = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
         panelFiltros.setBackground(new Color(44, 62, 80));
         panelFiltros.setPreferredSize(new Dimension(800, 70));
         
         // --- A. Buscador Texto ---
         agregarLabel(panelFiltros, "Buscar:");
-        txtBuscador = new JTextField(12); // Un poco más chico para hacer lugar
+        txtBuscador = new JTextField(12);
         txtBuscador.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtBuscador.addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent e) { aplicarFiltros(); }
@@ -59,39 +67,37 @@ public class PanelConsultaStock extends JPanel {
         cmbCatMadre = new JComboBox<>();
         cmbCatMadre.setPreferredSize(new Dimension(130, 25));
         
-        // 2. COMBO HIJA (Subcategoría)
-        
+        // 2. COMBO HIJA
         cmbSubCat = new JComboBox<>();
         cmbSubCat.setPreferredSize(new Dimension(130, 25));
-        cmbSubCat.setEnabled(false); // Nace deshabilitado
+        cmbSubCat.setEnabled(false); 
 
-        // Cargar las madres al iniciar
+        // Cargar las madres usando el Controlador de Categorías
         cargarCategoriasMadre();
 
         // EVENTO: Al elegir Madre -> Cargar Hijas
         cmbCatMadre.addActionListener(e -> {
             Object seleccionado = cmbCatMadre.getSelectedItem();
             
-            // Limpiamos subcategorías
             cmbSubCat.removeAllItems();
-            cmbSubCat.addItem("TODAS"); // Opción por defecto
+            cmbSubCat.addItem("TODAS"); 
             
             if (seleccionado instanceof Categoria) {
                 Categoria madre = (Categoria) seleccionado;
                 
-                // Llenamos con las hijas de esa madre
-                List<Categoria> hijas = empresa.getSubcategorias(madre.getId());
+                // CAMBIO: Pedimos subcategorías al ControladorCategoria
+                List<Categoria> hijas = ctrlCategoria.obtenerSubCategorias(madre.getId());
+                
                 for (Categoria hija : hijas) {
                     cmbSubCat.addItem(hija);
                 }
                 
                 cmbSubCat.setEnabled(true);
             } else {
-                // Si eligió "TODAS" en el padre, deshabilitamos el hijo
                 cmbSubCat.setEnabled(false);
             }
             
-            aplicarFiltros(); // Disparamos la búsqueda
+            aplicarFiltros(); 
         });
 
         // EVENTO: Al elegir Hija -> Solo filtrar
@@ -101,7 +107,7 @@ public class PanelConsultaStock extends JPanel {
         panelFiltros.add(cmbSubCat);
 
         // --- C. Stock ---
-        agregarLabel(panelFiltros, "Stock menor a:"); // Texto corto
+        agregarLabel(panelFiltros, "Stock menor a:");
         txtStockMaximo = new JTextField(4);
         txtStockMaximo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         txtStockMaximo.setHorizontalAlignment(JTextField.CENTER);
@@ -112,7 +118,7 @@ public class PanelConsultaStock extends JPanel {
         
         // --- D. Reset y Contador ---
         JButton btnReset = new JButton("↻");
-        btnReset.setPreferredSize(new Dimension(50, 40)); // Más compacto
+        btnReset.setPreferredSize(new Dimension(50, 40));
         btnReset.setBackground(new Color(127, 140, 141));
         btnReset.setForeground(Color.WHITE);
         btnReset.setFocusPainted(false);
@@ -127,7 +133,7 @@ public class PanelConsultaStock extends JPanel {
         add(panelFiltros, BorderLayout.NORTH);
 
         // =================================================
-        // 2. TABLA CENTRAL (Igual que antes)
+        // 2. TABLA CENTRAL
         // =================================================
         String[] columnas = {"Cód.", "Descripción", "Categoría", "Stock", "Costo", "Precio"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
@@ -189,14 +195,14 @@ public class PanelConsultaStock extends JPanel {
     }
 
     // =================================================
-    // LÓGICA INTERNA
+    // LÓGICA INTERNA ACTUALIZADA
     // =================================================
 
     private void cargarCategoriasMadre() {
         cmbCatMadre.removeAllItems();
         cmbCatMadre.addItem("TODAS");
-        // Usamos el método de Empresa que solo trae madres
-        for (Categoria c : empresa.getCategoriasMadre()) {
+        // CAMBIO: Usamos ControladorCategoria
+        for (Categoria c : ctrlCategoria.obtenerCategoriasMadre()) {
             cmbCatMadre.addItem(c);
         }
     }
@@ -210,16 +216,12 @@ public class PanelConsultaStock extends JPanel {
         Object seleccionMadre = cmbCatMadre.getSelectedItem();
         Object seleccionHija = cmbSubCat.getSelectedItem();
 
-        // 1. Si hay una HIJA específica seleccionada, esa tiene prioridad
         if (seleccionHija instanceof Categoria) {
             categoriaParaFiltrar = (Categoria) seleccionHija;
         } 
-        // 2. Si no hay hija, pero hay MADRE seleccionada, usamos la madre
         else if (seleccionMadre instanceof Categoria) {
             categoriaParaFiltrar = (Categoria) seleccionMadre;
         }
-        // 3. Si ambas dicen "TODAS", categoriaParaFiltrar queda null (muestra todo)
-
         
         Integer stockMax = null;
         try {
@@ -232,8 +234,8 @@ public class PanelConsultaStock extends JPanel {
             }
         } catch (Exception e) {}
 
-        // Llamamos al buscador inteligente
-        List<Producto> resultados = empresa.buscarConFiltros(texto, categoriaParaFiltrar, stockMax);
+        // CAMBIO MAGISTRAL: Usamos ControladorStock para buscar
+        List<Producto> resultados = ctrlStock.buscarProductosConFiltros(texto, categoriaParaFiltrar, stockMax);
 
         modeloTabla.setRowCount(0);
         for (Producto p : resultados) {
@@ -263,7 +265,6 @@ public class PanelConsultaStock extends JPanel {
     private void resetearTodo() {
         txtBuscador.setText("");
         if (cmbCatMadre.getItemCount() > 0) cmbCatMadre.setSelectedIndex(0);
-        // cmbSubCat se limpiará solo por el evento del padre
         txtStockMaximo.setText("");
         limiteAlertaRojo = 10;
         codigosOcultos.clear();

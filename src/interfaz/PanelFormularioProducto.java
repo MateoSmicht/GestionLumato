@@ -31,10 +31,10 @@ public class PanelFormularioProducto extends JPanel {
 
     private Runnable onGuardarExitoso;
     private Runnable onCancelar;
-    private Empresa empresa;
+ 
 
-    public PanelFormularioProducto(Empresa empresa, String codigoPredefinido, Runnable onGuardar, Runnable onCancelar) {
-        this.controlador = new ControladorStock(empresa);
+    public PanelFormularioProducto(ControladorStock cs, String codigoPredefinido, Runnable onGuardar, Runnable onCancelar) {
+        this.controlador = cs;
         this.onGuardarExitoso = onGuardar;
         this.onCancelar = onCancelar;
 

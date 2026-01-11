@@ -29,10 +29,10 @@ public class DialogoNuevaCategoria extends JDialog {
     // 3. Pestaña Eliminar (NUEVO)
     private JComboBox<Categoria> cmbTodasEliminar;
 
-    public DialogoNuevaCategoria(JFrame parent, Empresa empresa) {
+    public DialogoNuevaCategoria(JFrame parent, ControladorCategoria controlador) {
         super(parent, "Gestión de Categorías", true);
-        
-        this.controlador = new ControladorCategoria(empresa);
+        this.controlador= controlador;
+       
 
         setSize(500, 400);
         setLocationRelativeTo(parent);

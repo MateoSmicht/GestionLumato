@@ -11,15 +11,19 @@ import modelo.DetalleCarga; // <--- Importamos la nueva clase
 
 public class ControladorCargaStock {
 
-	private Empresa empresa;
-	private List<DetalleCarga> listaItems; // Usamos DetalleCarga
-	private ControladorStock controladorStock;
+    private Empresa empresa; // Quizás ya ni la necesites si usas el controladorStock
+    private List<DetalleCarga> listaItems;
+    private ControladorStock controladorStock;
 
-	public ControladorCargaStock(Empresa empresa) {
-		this.empresa = empresa;
-		this.listaItems = new ArrayList<>();
-		this.controladorStock = new ControladorStock(empresa);
-	}
+    // CAMBIO: Recibimos el ControladorStock ya fabricado desde afuera
+    public ControladorCargaStock(Empresa empresa, ControladorStock cs) {
+        this.empresa = empresa;
+        this.listaItems = new ArrayList<>();
+        
+        // Guardamos la referencia al que ya existe. NO hacemos 'new'.
+        this.controladorStock = cs; 
+    }
+
 
 	public Producto buscarProducto(String codigo) {
 		return empresa.buscarProducto(codigo);

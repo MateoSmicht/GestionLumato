@@ -1,99 +1,138 @@
 package persistencia;
 
-
-
-import modelo.Producto;
-import com.google.gson.Gson; 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import modelo.Producto;
+
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RepositorioProductoJSON implements RepositorioProducto {
 
     private final String RUTA_ARCHIVO = "productos.json";
     private final Gson gson;
+    private Map<String, Producto> mapaId;//MAPA DE PRODUCTOS CON CLAVE CODIGO INTERNO
+    private Map<String, Producto> mapaBarra;//MAPA DE PRODUCTOS CON CLAVE CODIGO BARRA
 
     public RepositorioProductoJSON() {
-        // Usamos setPrettyPrinting para que el JSON sea legible por humanos (con enters y espacios)
         this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.mapaId = new HashMap<>(); 
+        this.mapaBarra = new HashMap<>();
+        
+        cargarCacheDesdeArchivo();
+    }
+
+    private void cargarCacheDesdeArchivo() {
+        File archivo = new File(RUTA_ARCHIVO);
+        if (!archivo.exists()) return;
+
+        try (Reader reader = new FileReader(archivo)) {
+            Type listaType = new TypeToken<ArrayList<Producto>>() {}.getType();
+            List<Producto> lista = gson.fromJson(reader, listaType);
+            
+            if (lista != null) {
+                for (Producto p : lista) {
+                    // Llenamos AMBOS mapas
+                    mapaId.put(p.getCodigoInterno(), p);
+                    
+                    // Solo indexamos si tiene código de barra (por seguridad)
+                    if (p.getCodigoBarra() != null && !p.getCodigoBarra().isEmpty()) {
+                    	mapaBarra.put(p.getCodigoBarra(), p); 
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // --- MÉTODOS PÚBLICOS ---
+
+    @Override
+    public Producto buscarPorCodigo(String codigoBarra) {
+        if (codigoBarra == null) return null;
+        return mapaBarra.get(codigoBarra);
+    }
+    
+    // Método extra por si alguna vez necesitas buscar por ID interno (opcional)
+    public Producto buscarPorIdInterno(String id) {
+        return mapaId.get(id);
     }
 
     @Override
     public List<Producto> obtenerTodos() {
-        File archivo = new File(RUTA_ARCHIVO);
-
-        // 1. Si el archivo no existe, devolvemos lista vacía
-        if (!archivo.exists()) {
-            return new ArrayList<>();
-        }
-
-        try (Reader reader = new FileReader(archivo)) {
-            // 2. EL TRUCO DEL TYPE TOKEN (Necesario para listas)
-            Type listaProductosType = new TypeToken<ArrayList<Producto>>() {}.getType();
-            
-            // 3. Convertir Texto -> Objetos Java
-            List<Producto> productos = gson.fromJson(reader, listaProductosType);
-            
-            // Protección extra: si el archivo estaba vacío, gson devuelve null
-            return productos != null ? productos : new ArrayList<>();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+        return new ArrayList<>(mapaId.values());
     }
 
     @Override
     public void guardar(Producto p) {
-        List<Producto> productos = obtenerTodos();
-
-        // Lógica de "UPSERT" (Update or Insert)
-        // Si ya existe un producto con ese código, lo borramos para poner el nuevo
-        productos.removeIf(prod -> prod.getCodigoInterno().equals(p.getCodigoInterno()));
-
-        // Agregamos la versión nueva
-        productos.add(p);
-
-        guardarListaEnArchivo(productos);
-    }
-
-    @Override
-    public Producto buscarPorCodigo(String codigoInterno) {
-        List<Producto> productos = obtenerTodos();
+        Producto versionAnterior = mapaId.get(p.getCodigoInterno());
         
-        // Recorremos la lista en memoria buscando el código
-        for (Producto p : productos) {
-            if (p.getCodigoInterno().equals(codigoInterno)) {
-                return p;
+        if (versionAnterior != null) {
+            // A. Borrar código de barra principal viejo
+            String barraVieja = versionAnterior.getCodigoBarra();
+            if (barraVieja != null) {
+                mapaBarra.remove(barraVieja);
+            }
+            
+            // B. Borrar TODOS los códigos secundarios viejos 
+            for (String aliasViejo : versionAnterior.getCodigosSecundarios()) {
+                mapaBarra.remove(aliasViejo);
             }
         }
-        return null; // No encontrado
+
+        // --- PASO 2: ACTUALIZACIÓN (
+        
+        // A. Guardar en el Mapa Maestro (ID Interno)
+        mapaId.put(p.getCodigoInterno(), p);
+        
+        // B. Indexar Código Principal
+        if (p.getCodigoBarra() != null && !p.getCodigoBarra().isEmpty()) {
+            mapaBarra.put(p.getCodigoBarra(), p);
+        }
+        
+        // C. Indexar Códigos Secundarios / Alias (Esto es clave para "Unificar")
+        for (String alias : p.getCodigosSecundarios()) {
+            if (alias != null && !alias.isEmpty()) {
+                mapaBarra.put(alias, p);
+            }
+        }
+        
+        // --- PASO 3: PERSISTENCIA ---
+        guardarCambiosEnArchivo();
     }
 
     @Override
     public void eliminar(String codigoInterno) {
-        List<Producto> productos = obtenerTodos();
+        Producto p = mapaId.remove(codigoInterno);
         
-        // Borramos si coincide el código
-        boolean borrado = productos.removeIf(p -> p.getCodigoInterno().equals(codigoInterno));
+        // Si existía, también lo sacamos del índice de barras
+        if (p != null && p.getCodigoBarra() != null) {
+        	mapaBarra.remove(p.getCodigoBarra());
+        }
+        
+        guardarCambiosEnArchivo();
+    }
 
-        if (borrado) {
-            guardarListaEnArchivo(productos);
+    public void eliminarIndiceBarra(String codigoBarra) {
+        if (codigoBarra != null) {
+            mapaBarra.remove(codigoBarra);
         }
     }
 
-    // --- MÉTODOS PRIVADOS AUXILIARES ---
-
-    private void guardarListaEnArchivo(List<Producto> productos) {
+    // --- ESCRITURA ---
+    private void guardarCambiosEnArchivo() {
         try (Writer writer = new FileWriter(RUTA_ARCHIVO)) {
-            // Convertir Objetos Java -> Texto JSON
-            gson.toJson(productos, writer);
+            // Guardamos basándonos en el mapa de IDs que es el "maestro"
+            List<Producto> listaParaGuardar = new ArrayList<>(mapaId.values());
+            gson.toJson(listaParaGuardar, writer);
         } catch (IOException e) {
             e.printStackTrace();
-            // En un sistema real, aquí lanzarías una excepción personalizada
         }
     }
 }

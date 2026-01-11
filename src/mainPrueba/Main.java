@@ -1,54 +1,69 @@
 package mainPrueba;
+
 import java.awt.EventQueue;
-import java.math.BigDecimal;
-import modelo.*;
-import interfaz.MainForm; // <--- Importamos el Menú Principal directo
+import controlador.ControladorCategoria;
+import controlador.ControladorStock;
+import interfaz.MainForm;
+import modelo.Empresa;
+import modelo.Gerente;
+import modelo.Usuario;
+// Asegúrate de que tus repositorios estén en este paquete o ajusta el import
+import persistencia.RepositorioCategoriaJSON; 
+import persistencia.RepositorioCategoria;
+import persistencia.RepositorioProductoJSON;
+import persistencia.RepositorioProducto;
 
 public class Main {
     public static void main(String[] args) {
-    	
+        
+        // 1. INICIALIZAR EL MODELO Y REPOSITORIOS
         Empresa miNegocio = new Empresa("Gestion Lumato V");
-
-        // ... carga de productos ...
-        Categoria almacen = miNegocio.crearCategoria("Almacen", null);
-        Categoria perfumeria = miNegocio.crearCategoria("Perfumeria", null);
-        Categoria limpieza = miNegocio.crearCategoria("limpieza", null);
-        Categoria bebidas = miNegocio.crearCategoria("Bebidas", null);
         
-        Producto arroz = new Producto("A-01", "77912", almacen, "Arroz Gallo","BULTO",24, 
-                new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
-        arroz.agregarStock(50,true);
-        miNegocio.agregarProducto(arroz);
-        Producto coca = new Producto("A-02", "779", almacen, "Manaos Cola 2,25L", "BULTO", 6,
-                new BigDecimal("1200"), new BigDecimal("0.30"), new BigDecimal("0.00"));
-        coca.agregarStock(10,true);
-        miNegocio.agregarProducto(coca);
-        
-     // PRODUCTO: Pasta Dental (La caja trae 12)
-        Producto colgate = new Producto(
-                "COL-12", "7798049448084", perfumeria, 
-                "Colgate Total 12", 
-                "CAJA", // Nombre de la unidad mayor
-                12,     // Factor
-                new BigDecimal("1000"), new BigDecimal("0.3"), new BigDecimal("0.21"));
-        colgate.agregarStock(100,false);
-        miNegocio.agregarProducto(colgate);
+        // Repositorios (Capa de Datos)
+        RepositorioProducto repoProd = new RepositorioProductoJSON();
+        RepositorioCategoria repoCat = new RepositorioCategoriaJSON();
 
-        // GUARDAMOS EL USUARIO EN UNA VARIABLE PARA USARLO ABAJO
+        // 2. INICIALIZAR LOS CONTROLADORES (Capa Lógica)
+        // Controlador de Stock (Productos)
+        ControladorStock controlProd = new ControladorStock(miNegocio, repoProd);
+        
+        // Controlador de Categorías (Necesita ambos repositorios para validar)
+        ControladorCategoria controlCat = new ControladorCategoria(repoCat, repoProd);
+
+
+        // 3. CARGA INICIAL DE DATOS (Solo si el archivo está vacío)
+        try {
+            if (repoCat.obtenerTodas().isEmpty()) {
+                System.out.println("Cargando categorías iniciales...");
+                
+                // CORRECCIÓN AQUÍ: El segundo parámetro es boolean (false), no null.
+                controlCat.guardarNuevaCategoria("Almacen", false, null);
+                controlCat.guardarNuevaCategoria("Perfumeria", false, null);
+                controlCat.guardarNuevaCategoria("Limpieza", false, null);
+                controlCat.guardarNuevaCategoria("Bebidas", false, null);
+                
+                System.out.println("Categorías creadas exitosamente en JSON.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al crear categorías iniciales: " + e.getMessage());
+        }
+        
+        // 4. CREACIÓN DE USUARIO (Hardcodeado para entrar)
         Usuario admin = new Gerente("admin", "123", "Mateo Smicht");
         miNegocio.agregarUsuario(admin);
-        
-        miNegocio.agregarUsuario(new Cajero("Micaela", "123", "Micaela sanchez"));
-        
-        // Iniciar Ventana DIRECTO AL MENU (Bypass Login)
+
+        // 5. INICIAR LA INTERFAZ GRÁFICA
         EventQueue.invokeLater(() -> {
             try {
-                // ACÁ ESTABA TU ERROR: Le pasamos la empresa Y el usuario admin
-                MainForm ventana = new MainForm(miNegocio, admin); 
+                // IMPORTANTE: Asegúrate de que el constructor de MainForm coincida con esto:
+                // public MainForm(Empresa e, Usuario u, ControladorStock cs, ControladorCategoria cc)
+                MainForm ventana = new MainForm(miNegocio, admin, controlProd, controlCat);
                 
                 ventana.setVisible(true);
                 ventana.setLocationRelativeTo(null);
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 }

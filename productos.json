@@ -1,0 +1,70 @@
+[
+  {
+    "codigoInterno": "A-02",
+    "codigoBarra": "779",
+    "categoria": {
+      "id": 1,
+      "nombre": "Almacen"
+    },
+    "descripcion": "Manaos Cola 2,25L",
+    "cantidadStock": 60,
+    "nombreUnidad": "BULTO",
+    "factor": 6,
+    "precioCosto": 1200,
+    "ppp": 1200,
+    "porcentajeGanancia": 0.30,
+    "alicuotaIVA": 0.00,
+    "codigosSecundarios": []
+  },
+  {
+    "codigoInterno": "1",
+    "codigoBarra": "7",
+    "categoria": {
+      "id": 4,
+      "nombre": "Bebidas"
+    },
+    "descripcion": "COCACOLA",
+    "cantidadStock": 3,
+    "nombreUnidad": "UNI",
+    "factor": 1,
+    "precioCosto": 1500,
+    "ppp": 1500,
+    "porcentajeGanancia": 1.00,
+    "alicuotaIVA": 0.0,
+    "codigosSecundarios": []
+  },
+  {
+    "codigoInterno": "A-01",
+    "codigoBarra": "77912",
+    "categoria": {
+      "id": 1,
+      "nombre": "Almacen"
+    },
+    "descripcion": "Arroz Gallo",
+    "cantidadStock": 1200,
+    "nombreUnidad": "BULTO",
+    "factor": 24,
+    "precioCosto": 1200,
+    "ppp": 1200,
+    "porcentajeGanancia": 0.30,
+    "alicuotaIVA": 0.00,
+    "codigosSecundarios": []
+  },
+  {
+    "codigoInterno": "COL-12",
+    "codigoBarra": "7798049448084",
+    "categoria": {
+      "id": 2,
+      "nombre": "Perfumeria"
+    },
+    "descripcion": "Colgate Total 12",
+    "cantidadStock": 100,
+    "nombreUnidad": "CAJA",
+    "factor": 12,
+    "precioCosto": 1000,
+    "ppp": 1000,
+    "porcentajeGanancia": 0.3,
+    "alicuotaIVA": 0.21,
+    "codigosSecundarios": []
+  }
+]

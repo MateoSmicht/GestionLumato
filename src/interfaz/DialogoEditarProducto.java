@@ -32,9 +32,9 @@ public class DialogoEditarProducto extends JDialog {
     private JTextField txtFactor;
     private JTextField txtStock;
 
-    public DialogoEditarProducto(JFrame parent, Empresa empresa, Producto producto, Runnable onGuardar) {
+    public DialogoEditarProducto(JFrame parent,ControladorStock cs, Producto producto, Runnable onGuardar) {
         super(parent, "Editar Producto: " + producto.getDescripcion(), true);
-        this.controlador = new ControladorStock(empresa);
+        this.controlador = cs;
         this.productoOriginal = producto;
         this.onGuardarExitoso = onGuardar;
 

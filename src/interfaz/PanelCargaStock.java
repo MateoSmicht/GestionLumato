@@ -17,12 +17,14 @@ import modelo.Empresa;
 import modelo.Producto;
 import modelo.DetalleCarga;
 import controlador.ControladorCargaStock;
+import controlador.ControladorStock;
 
 public class PanelCargaStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
     private ControladorCargaStock controlador;
+    private ControladorStock controladorStock;
     private boolean modoBulto = false;
 
     // Componentes Visuales
@@ -43,9 +45,10 @@ public class PanelCargaStock extends JPanel {
     private final Color COLOR_ROJO = new Color(231, 76, 60);
     private final Color COLOR_NARANJA = new Color(230, 126, 34);
 
-    public PanelCargaStock(Empresa empresa) {
-        this.controlador = new ControladorCargaStock(empresa);
-
+    public PanelCargaStock(Empresa empresa, ControladorStock cs) {
+        this.controlador = new ControladorCargaStock(empresa, cs);
+        this.controladorStock= cs;
+       
         setLayout(null);
         setBackground(COLOR_FONDO);
         setBounds(0, 0, 1000, 680);
@@ -552,6 +555,7 @@ public class PanelCargaStock extends JPanel {
             DialogoModificarPrecio dialog = new DialogoModificarPrecio(
                 parent, 
                 controlador.getEmpresa(), 
+                this.controladorStock,
                 p, 
                 detalleSeleccionado,
                 () -> actualizarTabla() 
@@ -565,7 +569,7 @@ public class PanelCargaStock extends JPanel {
     }
     private void abrirDialogoAltaRapida(String codigo) {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, controlador.getEmpresa(), codigo);
+        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, codigo, this.controladorStock);
         dialog.setVisible(true);
         
         if (dialog.isGuardadoExitoso()) {

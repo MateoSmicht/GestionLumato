@@ -1,15 +1,17 @@
 package interfaz;
 
 import javax.swing.*;
+
+import controlador.ControladorStock;
+
 import java.awt.*;
 import java.util.List;
-import modelo.Empresa;
 import modelo.Producto;
 
 public class DialogoUnificar extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    private Empresa empresa;
+    private ControladorStock controlador;
     
     // Componentes Fusión
     private JTextField txtPrincipal;
@@ -23,9 +25,9 @@ public class DialogoUnificar extends JDialog {
     private JButton btnEliminarAlias;
     private Producto productoSeleccionado; // Para saber de quién es la lista
 
-    public DialogoUnificar(JFrame parent, Empresa empresa) {
+    public DialogoUnificar(JFrame parent, ControladorStock controlador) {
         super(parent, "Gestión de Códigos y Fusión", true);
-        this.empresa = empresa;
+        this.controlador = controlador;
         
         // Hacemos la ventana más ancha para que entre la lista a la derecha
         setSize(900, 450);
@@ -157,7 +159,7 @@ public class DialogoUnificar extends JDialog {
         String cod = txtPrincipal.getText().trim();
         if (cod.isEmpty()) return;
         
-        productoSeleccionado = empresa.buscarProducto(cod);
+        productoSeleccionado = controlador.buscarProducto(cod);
         
         if (productoSeleccionado != null) {
             lblInfoPrincipal.setText("<html>" + productoSeleccionado.getDescripcion() + "<br>Stock: <b>" + productoSeleccionado.getCantidadStock() + "</b></html>");
@@ -195,7 +197,7 @@ public class DialogoUnificar extends JDialog {
     private void buscarInfoDuplicado() {
         String cod = txtDuplicado.getText().trim();
         if (cod.isEmpty()) return;
-        Producto p = empresa.buscarProducto(cod);
+        Producto p = controlador.buscarProducto(cod);
         if (p != null) {
             lblInfoDuplicado.setText("<html>" + p.getDescripcion() + "<br>Stock: <b>" + p.getCantidadStock() + "</b></html>");
             lblInfoDuplicado.setForeground(Color.BLACK);
@@ -219,7 +221,7 @@ public class DialogoUnificar extends JDialog {
                 "Atención", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                empresa.unificarProductos(codP, codD);
+                controlador.unificarProductos(codP, codD);
                 JOptionPane.showMessageDialog(this, "¡Fusión Exitosa!");
                 
                 // Limpiar duplicado
@@ -248,7 +250,7 @@ public class DialogoUnificar extends JDialog {
         
         if (resp == JOptionPane.YES_OPTION) {
             // Llamamos al método nuevo de Empresa
-            empresa.borrarCodigoSecundario(productoSeleccionado, codigoSeleccionado);
+            controlador.borrarCodigoSecundario(productoSeleccionado, codigoSeleccionado);
             
             // Refrescamos la lista visual
             cargarListaAlias();

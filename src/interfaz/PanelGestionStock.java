@@ -7,12 +7,14 @@ import java.io.File;
 
 import modelo.Empresa;
 import modelo.Producto;
+import controlador.ControladorCategoria;
 import controlador.ControladorStock;
 
 public class PanelGestionStock extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private ControladorStock controlador;
+    private ControladorCategoria controladorCat;
     
     // --- BOTONES PÚBLICOS ---
     public JButton btnAltaProducto;
@@ -29,8 +31,10 @@ public class PanelGestionStock extends JPanel {
     private final Color COL_AMARILLO= new Color(241, 196, 15); 
     private final Color COL_VIOLETA = new Color(142, 68, 173); 
 
-    public PanelGestionStock(Empresa empresa) {
-        this.controlador = new ControladorStock(empresa); 
+    public PanelGestionStock(ControladorStock cStock, ControladorCategoria controladorCat) {
+    	
+        this.controlador = cStock; 
+        this.controladorCat= controladorCat;
         
         // 1. LAYOUT PRINCIPAL: BorderLayout
         // Esto asegura que el Header se quede arriba y el resto ocupe TODO el espacio
@@ -79,11 +83,12 @@ public class PanelGestionStock extends JPanel {
 
         // --- FILA 2 ---
         JButton btnUnificar = crearBoton("FUSIONAR DUPLICADOS", "Corregir códigos", COL_NARANJA, false);
-        btnUnificar.addActionListener(e -> new DialogoUnificar((JFrame)SwingUtilities.getWindowAncestor(this), empresa).setVisible(true));
+        btnUnificar.addActionListener(e -> new DialogoUnificar((JFrame)SwingUtilities.getWindowAncestor(this), cStock).setVisible(true));
         
         JButton btnCategoria = crearBoton("GESTIONAR CATEGORÍAS", "Familias y Rubros", COL_AMARILLO, false);
         btnCategoria.setForeground(new Color(44, 62, 80));
-        btnCategoria.addActionListener(e -> new DialogoNuevaCategoria((JFrame)SwingUtilities.getWindowAncestor(this), empresa).setVisible(true));
+        btnCategoria.addActionListener(e -> new DialogoNuevaCategoria((JFrame)SwingUtilities.getWindowAncestor(this), this.controladorCat).setVisible(true));
+        
 
         agregarBoton(panelGrid, btnUnificar,  0, 1, 3, 1);
         agregarBoton(panelGrid, btnCategoria, 3, 1, 3, 1);
@@ -93,15 +98,15 @@ public class PanelGestionStock extends JPanel {
         btnConsulta.addActionListener(e -> {
             JDialog d = new JDialog((Frame)SwingUtilities.getWindowAncestor(this), "Buscador", true);
             d.setSize(1000, 700); d.setLocationRelativeTo(null);
-            d.add(new PanelConsultaStock(empresa)); d.setVisible(true);
+            d.add(new PanelConsultaStock(cStock, this.controladorCat)); d.setVisible(true);
         });
 
         JButton btnEditar = crearBoton("EDITAR", "Producto", COL_NARANJA, false);
         btnEditar.addActionListener(e -> {
             String cod = JOptionPane.showInputDialog(this, "Código a editar:");
             if(cod != null && !cod.isEmpty()) {
-                Producto p = empresa.buscarProducto(cod);
-                if(p!=null) new DialogoEditarProducto((JFrame)SwingUtilities.getWindowAncestor(this), empresa, p, null).setVisible(true);
+                Producto p = cStock.buscarProducto(cod);
+                if(p!=null) new DialogoEditarProducto((JFrame)SwingUtilities.getWindowAncestor(this),cStock, p, null).setVisible(true);
                 else JOptionPane.showMessageDialog(this, "No encontrado");
             }
         });

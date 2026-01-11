@@ -6,19 +6,20 @@ import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-
-import javax.swing.JOptionPane;
-
 import modelo.Empresa;
 import modelo.Producto;
 import modelo.Categoria;
+import persistencia.RepositorioProducto;
+import persistencia.RepositorioProductoJSON;
 
 public class ControladorStock {
 
     private Empresa empresa;
+    private RepositorioProducto repositorio;
 
-    public ControladorStock(Empresa empresa) {
+    public ControladorStock(Empresa empresa, RepositorioProducto repositorio) {
         this.empresa = empresa;
+        this.repositorio = repositorio;
     }
 
     /**
@@ -101,6 +102,10 @@ public class ControladorStock {
         return empresa.getCategoriasMadre();
     }
     
+    public Producto buscarProducto(String codigo) {
+    	return repositorio.buscarPorCodigo(codigo);
+    }
+    
     public String calcularPorcentajeGanancia(String strCosto, String strPrecioFinal) {
         try {
             if (strCosto == null || strCosto.isEmpty()) return "0";
@@ -140,59 +145,59 @@ public class ControladorStock {
                                 String strGanancia, String strIVA, String unidad, 
                                 String strFactor, String strStock) throws Exception {
         
-        // 1. Validaciones
-        if (codigo.isEmpty() || descripcion.isEmpty()) {
+    	if (codigo == null || codigo.isEmpty() || descripcion.isEmpty()) {
             throw new Exception("El código y la descripción son obligatorios.");
         }
-    
-        // Verificamos si ya existe ese código interno en la empresa
-        if (empresa.existeCodigoInterno(codigo)) {
-            throw new Exception("El código interno '" + codigo + "' ya está en uso por otro producto.");
+
+        // B. Validar que Stock y Factor sean números (Sustituye a empresa.validarNumero)
+        if (!esNumerico(strStock)) {
+            throw new IllegalArgumentException("El Stock debe ser un número entero válido. Valor ingresado: " + strStock);
         }
-        if (empresa.elProductoYaEstaCargado(codigo)) {
-            throw new Exception("El Producto :(" + codigo + " - " + descripcion +  ") Ya esta creado.");
-        }
-        
-        if(empresa.validarNumero(strStock)) {
-        	throw new IllegalArgumentException("Solo puede ingresar valores numéricos enteros."+ "ERROR: " + strStock );
-        }
-        if(empresa.validarNumero(codigo)) {
-        	throw new IllegalArgumentException("Solo puede ingresar valores numéricos enteros."+ "ERROR: " + codigo );
+        Producto existente = repositorio.buscarPorCodigo(codigo);
+        if (existente != null) {
+            throw new Exception("El producto con código de barra '" + codigo + "' ya existe: " + existente.getDescripcion());
         }
         try {
-            new BigDecimal(strCosto);
-            new BigDecimal(strGanancia);
+            BigDecimal costo = new BigDecimal(strCosto);
+            BigDecimal ganancia = new BigDecimal(strGanancia).divide(new BigDecimal(100)); 
+            BigDecimal iva = new BigDecimal(strIVA).divide(new BigDecimal(100));
+            int factor = Integer.parseInt(strFactor);
+            int stockIni = Integer.parseInt(strStock);
+
+            // Crear el Objeto
+            Producto nuevo = new Producto(generarCodigoInterno(), codigo, cat, descripcion, unidad, factor, costo, ganancia, iva);
+            
+            if (stockIni > 0) {
+                nuevo.agregarStock(stockIni, false);
+            }
+            repositorio.guardar(nuevo); 
+
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("El Costo y la Ganancia deben ser números válidos.");
+             throw new IllegalArgumentException("Error en los montos (Costo/Ganancia/IVA). Verifique los números.");
         }
-        
-
-        BigDecimal costo = new BigDecimal(strCosto);
-        // Guardamos la ganancia real (0.30) no la visual (30)
-        BigDecimal ganancia = new BigDecimal(strGanancia).divide(new BigDecimal(100)); 
-        BigDecimal iva = new BigDecimal(strIVA).divide(new BigDecimal(100));
-        
-        int factor = Integer.parseInt(strFactor);
-        int stockIni = Integer.parseInt(strStock);
-
-        
-        // 3. Crear el Objeto
-        Producto nuevo = new Producto(generarCodigoInterno(),codigo,cat, descripcion, unidad, factor, costo, ganancia, iva);
-        
-        // 4. Stock inicial
-        if (stockIni > 0) {
-            nuevo.agregarStock(stockIni, false); // Asumimos unidad simple
+    }
+    
+    private boolean esNumerico(String str) {
+        if (str == null || str.isEmpty()) return false;
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
         }
-
-        // 5. Persistir
-        empresa.agregarProducto(nuevo);
     }
     
     
-    
     private String generarCodigoInterno() {
-    	String codigoInterno= empresa.proximoCodigoDisponible();
-       return  codigoInterno;
+        List<Producto> todos = repositorio.obtenerTodos();
+        int maxId = 0;
+        for (Producto p : todos) {
+            try {
+                int id = Integer.parseInt(p.getCodigoInterno());
+                if (id > maxId) maxId = id;
+            } catch (Exception e) { /* Ignorar alfanuméricos */ }
+        }
+        return String.valueOf(maxId + 1);
     }
     
     public void modificarProductoCompleto(String codigoOriginal, String nuevoCodigo, String descripcion, 
@@ -291,6 +296,42 @@ public class ControladorStock {
         }   
     }
     
+ // Pegar dentro de ControladorStock.java
+    public List<Producto> buscarProductosConFiltros(String texto, Categoria categoriaFiltro, Integer stockMaximo) {
+        List<Producto> todos = repositorio.obtenerTodos();
+        java.util.List<Producto> resultado = new java.util.ArrayList<>();
+        String textoBusqueda = (texto != null) ? texto.toUpperCase().trim() : "";
+
+        for (Producto p : todos) {
+            boolean coincideTexto = textoBusqueda.isEmpty() || p.coincideCon(textoBusqueda);
+            
+            boolean coincideCategoria = true;
+            if (categoriaFiltro != null && p.getCategoria() != null) {
+                boolean esExacta = p.getCategoria().getId() == categoriaFiltro.getId();
+                boolean esHija = p.getCategoria().esHijaDe(categoriaFiltro.getId());
+                coincideCategoria = esExacta || esHija;
+            } else if (categoriaFiltro != null) {
+                coincideCategoria = false;
+            }
+
+            boolean coincideStock = true;
+            if (stockMaximo != null) {
+                coincideStock = p.getCantidadStock() <= stockMaximo;
+            }
+
+            if (coincideTexto && coincideCategoria && coincideStock) {
+                resultado.add(p);
+            }
+        }
+        return resultado;
+    }
+    
+
+    public List<Producto> obtenerTodosLosProductos() {
+        
+        return repositorio.obtenerTodos();
+    }
+    
 
     /**
      * Convierte el decimal (0.30) a String para la vista ("30")
@@ -318,6 +359,49 @@ public class ControladorStock {
 
     public List<Categoria> obtenerSubCategorias(int idMadre) {
         return empresa.getSubcategorias(idMadre);
+    }
+    
+    public void unificarProductos(String codPrincipal, String codDuplicado) throws Exception {
+        // 1. Buscamos los objetos usando el repositorio
+        Producto principal = repositorio.buscarPorCodigo(codPrincipal);
+        Producto duplicado = repositorio.buscarPorCodigo(codDuplicado);
+
+        // 2. Validaciones
+        if (principal == null || duplicado == null) {
+            throw new Exception("Uno de los productos no existe.");
+        }
+        
+        // Comparamos por ID interno para saber si son el mismo objeto en memoria
+        if (principal.getCodigoInterno().equals(duplicado.getCodigoInterno())) { 
+            throw new Exception("¡Son el mismo producto! No se pueden unificar.");
+        }
+
+        // 3. FUSIONAR STOCKS
+        int stockDelDuplicado = duplicado.getCantidadStock();
+        if (stockDelDuplicado > 0) {
+            principal.agregarStock(stockDelDuplicado, false);
+        }
+        principal.agregarCodigoSecundario(duplicado.getCodigoBarra());
+
+        for (String alias : duplicado.getCodigosSecundarios()) {
+            principal.agregarCodigoSecundario(alias);
+        }
+
+        repositorio.eliminar(duplicado.getCodigoInterno());
+        
+        repositorio.guardar(principal); 
+    }
+    
+    public void borrarCodigoSecundario(Producto producto, String codigoABorrar) {
+        if (producto.getCodigosSecundarios().remove(codigoABorrar)) {
+            // 1. Actualizamos el archivo JSON
+            repositorio.guardar(producto);
+            
+            // 2. Actualizamos la memoria RAM del repositorio (CASTEO NECESARIO SI NO LO PONES EN LA INTERFAZ)
+            if (repositorio instanceof RepositorioProductoJSON) {
+                ((RepositorioProductoJSON) repositorio).eliminarIndiceBarra(codigoABorrar);
+            }
+        }
     }
     
     }
