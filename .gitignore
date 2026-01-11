@@ -1,5 +1,12 @@
-bin/
-*.class
+# Archivos de configuración de IDE (Opcional, pero recomendado)
+.classpath
+.project
 .settings/
-.metadata/
-*.jar
+bin/
+
+# Base de datos local (NO SUBIR NUNCA)
+*.json
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
