@@ -13,8 +13,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import controlador.ControladorVenta;
-import modelo.Empresa;
-import modelo.Usuario;
 import modelo.Producto;
 import modelo.Venta;
 import modelo.DetalleVenta;
@@ -44,8 +42,8 @@ public class PanelVenta extends JPanel {
     private final Color COLOR_ROJO = new Color(231, 76, 60);
     private final Color COLOR_NARANJA = new Color(230, 126, 34);
 
-    public PanelVenta(Empresa empresa, Usuario vendedor) {
-        this.controlador = new ControladorVenta(empresa, vendedor);
+    public PanelVenta( ControladorVenta controlador) {
+        this.controlador = controlador;
 
         setLayout(null);
         setBackground(COLOR_FONDO);

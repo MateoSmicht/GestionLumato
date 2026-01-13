@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 
 import controlador.ControladorCategoria;
 import controlador.ControladorStock;
+import controlador.ControladorVenta;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -31,15 +32,17 @@ public class LoginWindow extends JFrame {
     private JPasswordField txtPassword;
     private ControladorStock controlador;
     private ControladorCategoria controladorCategoria;
+    private ControladorVenta controladorVenta;
     
     // Referencia al sistema
     private Empresa empresa;
 
     // Constructor que recibe la empresa
-    public LoginWindow(Empresa empresa, ControladorStock cs, ControladorCategoria cCat) {
+    public LoginWindow(Empresa empresa, ControladorStock cs, ControladorCategoria cCat, ControladorVenta controlVenta) {
         this.empresa = empresa;
         this.controlador = cs;
         this.controladorCategoria = cCat;
+        this.controladorVenta = controlVenta;
         
         setTitle("Acceso al Sistema");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -94,7 +97,7 @@ public class LoginWindow extends JFrame {
             
             // 2. Abrir la ventana principal (MainForm)
             // Le pasamos la empresa Y el usuario que acaba de entrar
-            MainForm principal = new MainForm(empresa, u, this.controlador, this.controladorCategoria); 
+            MainForm principal = new MainForm(empresa, u, this.controlador, this.controladorCategoria,this.controladorVenta ); 
             principal.setVisible(true);
             principal.setLocationRelativeTo(null);
             

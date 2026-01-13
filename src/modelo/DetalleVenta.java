@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public class DetalleVenta {
     private Producto producto;
-    private int cantidad; // Cantidad de "Bultos" o "Unidades" según corresponda
+    private int cantidad; 
     
     // Snapshots (Copias de los datos al momento de la venta)
     private String nombreUnidadSnapshot;

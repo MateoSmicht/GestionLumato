@@ -3,6 +3,7 @@ package mainPrueba;
 import java.awt.EventQueue;
 import controlador.ControladorCategoria;
 import controlador.ControladorStock;
+import controlador.ControladorVenta;
 import interfaz.MainForm;
 import modelo.Empresa;
 import modelo.Gerente;
@@ -11,6 +12,8 @@ import modelo.Usuario;
 import persistencia.RepositorioCategoriaJSON; 
 import persistencia.RepositorioCategoria;
 import persistencia.RepositorioProductoJSON;
+import persistencia.RepositorioVenta;
+import persistencia.RepositorioVentaJSON;
 import persistencia.RepositorioProducto;
 
 public class Main {
@@ -19,9 +22,13 @@ public class Main {
         // 1. INICIALIZAR EL MODELO Y REPOSITORIOS
         Empresa miNegocio = new Empresa("Gestion Lumato V");
         
+        Usuario admin = new Gerente("admin", "123", "Mateo Smicht");
+        miNegocio.agregarUsuario(admin);
+        
         // Repositorios (Capa de Datos)
         RepositorioProducto repoProd = new RepositorioProductoJSON();
         RepositorioCategoria repoCat = new RepositorioCategoriaJSON();
+        RepositorioVenta repoVenta = new RepositorioVentaJSON();
 
         // 2. INICIALIZAR LOS CONTROLADORES (Capa Lógica)
         // Controlador de Stock (Productos)
@@ -29,6 +36,8 @@ public class Main {
         
         // Controlador de Categorías (Necesita ambos repositorios para validar)
         ControladorCategoria controlCat = new ControladorCategoria(repoCat, repoProd);
+        
+        ControladorVenta controlVenta= new ControladorVenta(admin, repoProd, repoVenta );
 
 
         // 3. CARGA INICIAL DE DATOS (Solo si el archivo está vacío)
@@ -48,16 +57,13 @@ public class Main {
             System.err.println("Error al crear categorías iniciales: " + e.getMessage());
         }
         
-        // 4. CREACIÓN DE USUARIO (Hardcodeado para entrar)
-        Usuario admin = new Gerente("admin", "123", "Mateo Smicht");
-        miNegocio.agregarUsuario(admin);
 
-        // 5. INICIAR LA INTERFAZ GRÁFICA
+        // . INICIAR LA INTERFAZ GRÁFICA
         EventQueue.invokeLater(() -> {
             try {
                 // IMPORTANTE: Asegúrate de que el constructor de MainForm coincida con esto:
                 // public MainForm(Empresa e, Usuario u, ControladorStock cs, ControladorCategoria cc)
-                MainForm ventana = new MainForm(miNegocio, admin, controlProd, controlCat);
+                MainForm ventana = new MainForm(miNegocio, admin, controlProd, controlCat, controlVenta);
                 
                 ventana.setVisible(true);
                 ventana.setLocationRelativeTo(null);

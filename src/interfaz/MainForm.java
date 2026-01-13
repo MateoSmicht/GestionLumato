@@ -10,6 +10,7 @@ import javax.swing.border.EmptyBorder;
 
 import controlador.ControladorCategoria;
 import controlador.ControladorStock;
+import controlador.ControladorVenta;
 import modelo.Empresa;
 import modelo.Funcion;
 import modelo.Usuario;
@@ -23,16 +24,18 @@ public class MainForm extends JFrame {
     private Usuario usuarioLogueado;
     private ControladorStock controlador;
     private ControladorCategoria controladorCat;
+    private ControladorVenta controladorVenta;
     // --- COMPONENTES VISUALES ---
     private JPanel contentPane;
     private JPanel panelCabecera;
     private JPanel panelCuerpo; // Aquí se intercambian las pantallas
 
-    public MainForm(Empresa empresa, Usuario usuario, ControladorStock cs, ControladorCategoria cCategoria) {
+    public MainForm(Empresa empresa, Usuario usuario, ControladorStock cs, ControladorCategoria cCategoria, ControladorVenta cVenta) {
         this.empresa = empresa;
         this.usuarioLogueado = usuario;
         this.controlador= cs;
         this.controladorCat = cCategoria;
+        this.controladorVenta = cVenta;
 
         // Configuración de la Ventana Principal
         setTitle("Sistema de Gestión - " + empresa.getNombre());
@@ -189,7 +192,7 @@ public class MainForm extends JFrame {
 
     private void abrirPanelVenta() {
         panelCuerpo.removeAll();
-        PanelVenta panelVenta = new PanelVenta(empresa, usuarioLogueado);
+        PanelVenta panelVenta = new PanelVenta(this.controladorVenta);
         
         panelVenta.btnVolver.addActionListener(e -> {
             panelVenta.guardarSalida();
