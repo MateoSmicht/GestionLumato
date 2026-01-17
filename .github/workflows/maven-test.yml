@@ -1,27 +1,27 @@
-name: Java CI with Maven
+name: Java Maven Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ master ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ master ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout del código
-      uses: actions/checkout@v4
+      # 1️⃣ Clona tu repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Configurar Java 24
-      uses: actions/setup-java@v4
-      with:
-        java-version: '24'
-        distribution: 'temurin'
-        cache: 'maven'
-        # Nota: Si Java 24 da error por ser muy nuevo/EA, 
-        # cambia '24' por '21' aquí y en tu pom.xml temporalmente.
+      # 2️⃣ Instala JDK 24
+      - name: Set up JDK 24
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 24
 
-    - name: Ejecutar Tests con Maven
-      run: mvn -B test --file pom.xml
+      # 3️⃣ Compila y corre tests de Maven
+      - name: Build and run tests
+        run: mvn -B -ntp test
