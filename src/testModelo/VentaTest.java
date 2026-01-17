@@ -48,7 +48,8 @@ class VentaTest {
     @Test
     @DisplayName("Debe iniciar con valores en cero/vacíos")
     void testInicializacion() {
-        assertEquals(vendedor, venta.getVendedor(), "El vendedor debe ser el asignado");
+    	// Busca la línea 51 y cámbiala por esto:
+    	assertEquals(vendedor.getNombreCompleto(), venta.getNombreVendedor(), "El nombre del vendedor debe coincidir");
         assertTrue(venta.getItems().isEmpty(), "La lista de ítems debe iniciar vacía");
         assertEquals(BigDecimal.ZERO, venta.getTotal(), "El total debe iniciar en 0");
     }
