@@ -1,3 +1,4 @@
+ ![Java CI with Maven](https://github.com/MateoSmicht/GestionLumato/actions/workflows/maven-test.yml/badge.svg)
 # 📈 Sistema de Gestión Comercial & Stock (ERP)
 
 > Aplicación de escritorio completa para la administración de negocios, control de inventario y facturación, desarrollada en **Java** bajo arquitectura **MVC**.
