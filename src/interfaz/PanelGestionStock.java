@@ -9,6 +9,9 @@ import modelo.Empresa;
 import modelo.Producto;
 import controlador.ControladorCategoria;
 import controlador.ControladorStock;
+import interfaz.dialogos.DialogoEditarProducto;
+import interfaz.dialogos.DialogoNuevaCategoria;
+import interfaz.dialogos.DialogoUnificar;
 
 public class PanelGestionStock extends JPanel {
 

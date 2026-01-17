@@ -83,6 +83,7 @@ public class ControladorVenta {
     }
 
     public void finalizarVenta() {
+    	
         // 1. Descontar Stock y Actualizar JSON de Productos
         for (DetalleVenta detalle : ventaActual.getItems()) {
             int cantidadADescontar = detalle.getCantidadUnidadesReales();
@@ -93,7 +94,7 @@ public class ControladorVenta {
             // ¡IMPORTANTE! Guardar el producto actualizado en el disco
             repoProducto.guardar(p);
         }
-
+        ventaActual.actualizarFechaHora();
         // 2. Guardar la Venta en el Historial (JSON de Ventas)
         repoVenta.guardar(ventaActual);
         

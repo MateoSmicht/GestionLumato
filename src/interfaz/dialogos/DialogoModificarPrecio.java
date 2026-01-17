@@ -1,4 +1,4 @@
-package interfaz;
+package interfaz.dialogos;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,6 +9,7 @@ import modelo.DetalleCarga;
 import modelo.Empresa;
 import modelo.Producto;
 import controlador.ControladorStock;
+import interfaz.PanelPrecios;
 
 public class DialogoModificarPrecio extends JDialog {
 

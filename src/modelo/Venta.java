@@ -14,11 +14,12 @@ public class Venta {
     private Usuario vendedor;
     private List<DetalleVenta> items;
     private BigDecimal total;
+    private String nombreVendedor;
     //Facturacion
     public Venta(Usuario vendedor) {
         this.id = contadorId++;
+        this.nombreVendedor = vendedor.getNombreCompleto();
         this.fechaHora = LocalDateTime.now();
-        this.vendedor = vendedor;
         this.items = new ArrayList<>();
         this.total = BigDecimal.ZERO;
     }
@@ -85,10 +86,8 @@ public class Venta {
 		return fechaHora;
 	}
 
-
-
-	public void setFechaHora(LocalDateTime fechaHora) {
-		this.fechaHora = fechaHora;
+	public void actualizarFechaHora() {
+	    this.fechaHora = LocalDateTime.now();
 	}
 	
 	public String getFechaFormateada() {
@@ -125,6 +124,10 @@ public class Venta {
     public BigDecimal getTotal() { return total; }
     public Usuario getVendedor() { return vendedor; }
     public List<DetalleVenta> getItems() { return items; }
+
+	public String getNombreVendedor() {
+		return nombreVendedor;
+	}
 
 
 

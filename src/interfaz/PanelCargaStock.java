@@ -18,6 +18,8 @@ import modelo.Producto;
 import modelo.DetalleCarga;
 import controlador.ControladorCargaStock;
 import controlador.ControladorStock;
+import interfaz.dialogos.DialogoAltaProducto;
+import interfaz.dialogos.DialogoModificarPrecio;
 
 public class PanelCargaStock extends JPanel {
 

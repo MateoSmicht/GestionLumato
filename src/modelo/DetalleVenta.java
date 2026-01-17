@@ -3,7 +3,8 @@ package modelo;
 import java.math.BigDecimal;
 
 public class DetalleVenta {
-    private Producto producto;
+	private String nombreProducto;
+    private transient Producto producto;
     private int cantidad; 
     
     // Snapshots (Copias de los datos al momento de la venta)
@@ -16,6 +17,7 @@ public class DetalleVenta {
         this.producto = producto;
         this.cantidad = cantidad;
         this.codigoLeido = codigoLeido;
+        this.nombreProducto = producto.getDescripcion();
         
         if (esBulto) {
             // Vendemos la CAJA
@@ -44,8 +46,13 @@ public class DetalleVenta {
 
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
     
-    // Getters
-    public Producto getProducto() { return producto; }
+    
+    
+    public String getNombreProducto() {
+		return nombreProducto;
+	}
+
+	public Producto getProducto() { return producto; }
     public int getCantidad() { return cantidad; }
     public String getNombreUnidadSnapshot() { return nombreUnidadSnapshot; }
     public int getFactorSnapshot() { return factorSnapshot; }

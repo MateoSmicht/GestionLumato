@@ -1,8 +1,9 @@
-package interfaz;
+package interfaz.dialogos;
 
 import javax.swing.*;
 
 import controlador.ControladorStock;
+import interfaz.PanelFormularioProducto;
 import modelo.Empresa;
 
 public class DialogoAltaProducto extends JDialog {
