@@ -37,11 +37,9 @@ El código está estructurado para desacoplar responsabilidades:
 * **Lenguaje:** Java SE (JDK 17/21).
 * **Base de Datos:** MySQL / MariaDB.
 * **Interfaz:** Java Swing & AWT.
-* Gestión de Dependencias: Maven.
-
-Testing: JUnit 5 (Automatizado con GitHub Actions).
-
-Librerías: Gson, JCalendar, iText.
+* **Gestión de Dependencias:** Maven.
+* **Testing:** JUnit 5 (Automatizado con GitHub Actions).
+* **Librerías:** Gson, JCalendar, iText.
 
 ## 📸 Galería
 1-Facturacion
