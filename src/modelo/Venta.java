@@ -8,16 +8,15 @@ import java.util.List;
 import java.util.Objects;
 
 public class Venta {
-    private static long contadorId = 1;
-    private long id;
+    private int id;
     private LocalDateTime fechaHora;
     private Usuario vendedor;
     private List<DetalleVenta> items;
     private BigDecimal total;
     private String nombreVendedor;
+    
     //Facturacion
     public Venta(Usuario vendedor) {
-        this.id = contadorId++;
         this.nombreVendedor = vendedor.getNombreCompleto();
         this.fechaHora = LocalDateTime.now();
         this.items = new ArrayList<>();
@@ -40,6 +39,8 @@ public class Venta {
             this.items.remove(detalle);
         }
     }
+    
+    
  
     public void recalcularTotal() {
         this.total = BigDecimal.ZERO;
@@ -47,12 +48,7 @@ public class Venta {
             this.total = this.total.add(d.calcularSubtotal());
         }
     }
- // En modelo.Venta.java
 
-    /**
-     * Calcula cuántas unidades de un producto específico ya están en la lista de items.
-     * Convierte bultos a unidades base para tener el número real.
-     */
     public int calcularUnidadesEnCarrito(Producto productoBuscado) {
         int totalUnidades = 0;
 
@@ -70,16 +66,6 @@ public class Venta {
         return totalUnidades;
     }
     
-    public static long getContadorId() {
-		return contadorId;
-	}
-
-
-
-	public static void setContadorId(long contadorId) {
-		Venta.contadorId = contadorId;
-	}
-
 
 
 	public LocalDateTime getFechaHora() {
@@ -98,7 +84,7 @@ public class Venta {
 
 
 
-	public void setId(long id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 

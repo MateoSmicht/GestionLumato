@@ -37,6 +37,15 @@ public class RepositorioVentaJSON implements RepositorioVenta {
             gson.toJson(historial, writer);
         } catch (IOException e) { e.printStackTrace(); }
     }
+    
+    public int totalVentas() {
+    	return obtenerTodas().size();
+    }
+    
+    public int generadorIdVentas() {
+    	return totalVentas() + 1;
+    }
+    
 
     @Override
     public List<Venta> obtenerTodas() {

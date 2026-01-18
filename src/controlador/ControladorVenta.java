@@ -22,7 +22,6 @@ public class ControladorVenta {
     private Usuario vendedor;
     
     // --- MEMORIA TEMPORAL (Ventas en espera por vendedor) ---
-    // Esto reemplaza a empresa.setVentaPendiente
     private static Map<Usuario, Venta> ventasPendientes = new HashMap<>();
 
     public ControladorVenta(Usuario vendedor, RepositorioProducto repoProducto, RepositorioVenta repoVenta) {
@@ -30,10 +29,12 @@ public class ControladorVenta {
         this.repoProducto = repoProducto;
         this.repoVenta = repoVenta;
         this.ventaActual = new Venta(vendedor);
+        this.ventaActual.setId(this.repoVenta.generadorIdVentas());
     }
 
     public void nuevaVenta() {
         this.ventaActual = new Venta(vendedor);
+        this.ventaActual.setId(this.repoVenta.generadorIdVentas());
     }
 
     public Venta getVentaActual() {
@@ -91,7 +92,7 @@ public class ControladorVenta {
             
             p.descontarStock(cantidadADescontar, false);
             
-            // ¡IMPORTANTE! Guardar el producto actualizado en el disco
+            // Guardar el producto actualizado en el disco
             repoProducto.guardar(p);
         }
         ventaActual.actualizarFechaHora();
@@ -102,7 +103,9 @@ public class ControladorVenta {
         if (vendedor != null) ventasPendientes.remove(vendedor);
         
         // 4. Resetear para la siguiente
+
         nuevaVenta();
+
     }
 
     // ... (eliminarItem, modificarCantidadItem, calcularVuelto quedan IGUAL) ...
@@ -155,6 +158,7 @@ public class ControladorVenta {
             ventasPendientes.put(vendedor, ventaActual);
             // Creamos una nueva vacía para seguir operando
             nuevaVenta(); 
+            
         }
     }
 
