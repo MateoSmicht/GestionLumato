@@ -24,7 +24,7 @@ public class DialogoModificarPrecio extends JDialog {
     private PanelPrecios panelPrecios; 
     private JLabel lblProyeccionPPP;
 
-    public DialogoModificarPrecio(JFrame parent, Empresa empresa,ControladorStock cs, Producto producto, 
+    public DialogoModificarPrecio(JFrame parent,ControladorStock cs, Producto producto, 
                                   DetalleCarga detalleItem, Runnable onActualizarTabla) {
         super(parent, "Modificar Precio - " + producto.getDescripcion(), true);
         this.producto = producto;

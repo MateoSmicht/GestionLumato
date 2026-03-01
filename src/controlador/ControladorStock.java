@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import modelo.Empresa;
 import modelo.Producto;
 import modelo.Categoria;
@@ -351,9 +353,7 @@ public class ControladorStock {
     }
  
 
-    public List<Categoria> obtenerSubCategorias(int idMadre) {
-        return empresa.getSubcategorias(idMadre);
-    }
+   
     
     public void unificarProductos(String codPrincipal, String codDuplicado) throws Exception {
         // 1. Buscamos los objetos usando el repositorio
@@ -396,6 +396,16 @@ public class ControladorStock {
                 ((RepositorioProductoJSON) repositorio).eliminarIndiceBarra(codigoABorrar);
             }
         }
+    }
+    public List<Producto> buscarPorNombre(String nombre) {
+        return repositorio.obtenerTodos().stream()
+                .filter(p -> p.coincideCon(nombre))
+                .collect(Collectors.toList());
+    }
+    
+    public void eliminarProducto(String codigo) {
+    	Producto producto=this.buscarProducto(codigo);
+    	this.repositorio.eliminar(producto.getCodigoInterno());
     }
     
     }

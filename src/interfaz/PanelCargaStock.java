@@ -50,7 +50,7 @@ public class PanelCargaStock extends JPanel {
     private final Color COLOR_NARANJA = new Color(230, 126, 34);
 
     public PanelCargaStock(Empresa empresa, ControladorStock cs, ControladorCategoria controladorCategoria) {
-        this.controlador = new ControladorCargaStock(empresa, cs);
+        this.controlador = new ControladorCargaStock( cs);
         this.controladorStock= cs;
         this.controladorCategoria= controladorCategoria;
        
@@ -558,8 +558,7 @@ public class PanelCargaStock extends JPanel {
 
             JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
             DialogoModificarPrecio dialog = new DialogoModificarPrecio(
-                parent, 
-                controlador.getEmpresa(), 
+                parent,
                 this.controladorStock,
                 p, 
                 detalleSeleccionado,

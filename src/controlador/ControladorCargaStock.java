@@ -5,28 +5,28 @@ import java.util.ArrayList;
 import java.util.List;
 import modelo.Empresa;
 import modelo.Producto;
+import persistencia.RepositorioProducto;
 import modelo.CalculadoraCostos;
 import modelo.Categoria;
 import modelo.DetalleCarga; // <--- Importamos la nueva clase
 
 public class ControladorCargaStock {
 
-    private Empresa empresa; // Quizás ya ni la necesites si usas el controladorStock
     private List<DetalleCarga> listaItems;
     private ControladorStock controladorStock;
-
+   
     // CAMBIO: Recibimos el ControladorStock ya fabricado desde afuera
-    public ControladorCargaStock(Empresa empresa, ControladorStock cs) {
-        this.empresa = empresa;
+    public ControladorCargaStock( ControladorStock cs) {
         this.listaItems = new ArrayList<>();
         
         // Guardamos la referencia al que ya existe. NO hacemos 'new'.
         this.controladorStock = cs; 
+      
     }
 
 
 	public Producto buscarProducto(String codigo) {
-		return empresa.buscarProducto(codigo);
+		return this.controladorStock.buscarProducto(codigo);
 	}
 
 	
@@ -45,7 +45,7 @@ public class ControladorCargaStock {
 			codigoLimpio = partes[1]; // Nos quedamos solo con el código
 		}
 
-		Producto p = empresa.buscarProducto(codigoLimpio);
+		Producto p = this.controladorStock.buscarProducto(codigoLimpio);
 		if (p == null)
 			throw new Exception("Producto no encontrado: " + codigoLimpio);
 
@@ -54,7 +54,7 @@ public class ControladorCargaStock {
 	}
 
 	public void agregarItemConCantidad(String codigo, int cantidad, boolean modoBulto) throws Exception {
-		Producto p = empresa.buscarProducto(codigo);
+		Producto p = this.controladorStock.buscarProducto(codigo);
 		if (p == null)
 			throw new Exception("Error interno.");
 
@@ -79,8 +79,8 @@ public class ControladorCargaStock {
 		return listaItems;
 	}
 
-	public java.util.List<Producto> buscarPorNombre(String nombre) {
-		return empresa.buscarProductosPorNombre(nombre);
+	public List<Producto> buscarPorNombre(String nombre) {
+		return this.controladorStock.buscarPorNombre(nombre);
 	}
 
 	public void guardarProductoRapido(String codigo, String descripcion, String costoStr, String precioFinalStr)
@@ -102,15 +102,10 @@ public class ControladorCargaStock {
 		// 3. Reutilizamos la matemática del controlador principal
 		String ganancia = controladorStock.calcularPorcentajeGanancia(costoStr, precioFinalStr);
 
-		// 4. Buscamos categoría GENERAL
-		Categoria catGeneral = empresa.buscarCategoriaPorNombre("GENERAL");
-		if (catGeneral == null) {
-			empresa.crearCategoria("GENERAL", null);
-			catGeneral = empresa.buscarCategoriaPorNombre("GENERAL");
-		}
+		
 
 		// 5. Delegamos el guardado final al Controlador Principal
-		controladorStock.guardarProducto(codigo, descripcion, catGeneral, costoStr, ganancia, "21.0", // IVA default
+		controladorStock.guardarProducto(codigo, descripcion, null, costoStr, ganancia, "21.0", // IVA default
 				"UNI", // Unidad default
 				"1", // Factor default
 				"0" // Stock 0
@@ -151,7 +146,7 @@ private void actualizarProductoCompleto(Producto p, int cantidadNueva, BigDecima
         for (DetalleCarga detalle : listaItems) {
             
             // 1. Buscamos el producto real en la "Base de Datos" (Memoria)
-            Producto productoReal = empresa.buscarProducto(detalle.getProducto().getCodigoBarra());
+            Producto productoReal = controladorStock.buscarProducto(detalle.getProducto().getCodigoBarra());
 
             if (productoReal != null) {
                 // 2. Extraemos los datos finales de la tabla
@@ -192,7 +187,5 @@ private void actualizarProductoCompleto(Producto p, int cantidadNueva, BigDecima
 				new BigDecimal(item.getUnidadesReales()), item.getCostoNuevo());
 	}
 	
-	public Empresa getEmpresa() {
-		return empresa;
-	}
+	
 }
