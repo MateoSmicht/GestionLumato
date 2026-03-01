@@ -8,6 +8,7 @@ import java.util.List;
 import modelo.Categoria;
 import modelo.Empresa;
 import modelo.Producto;
+import controlador.ControladorCategoria;
 import controlador.ControladorStock;
 import interfaz.PanelPrecios;
 
@@ -16,6 +17,7 @@ public class DialogoEditarProducto extends JDialog {
     private static final long serialVersionUID = 1L;
     
     private ControladorStock controlador;
+    private ControladorCategoria controladorCategoria;
     private Producto productoOriginal; // Para recordar el código viejo
     private Runnable onGuardarExitoso;
 
@@ -33,9 +35,10 @@ public class DialogoEditarProducto extends JDialog {
     private JTextField txtFactor;
     private JTextField txtStock;
 
-    public DialogoEditarProducto(JFrame parent,ControladorStock cs, Producto producto, Runnable onGuardar) {
+    public DialogoEditarProducto(JFrame parent,ControladorStock cs, ControladorCategoria controladorCategoria, Producto producto, Runnable onGuardar) {
         super(parent, "Editar Producto: " + producto.getDescripcion(), true);
         this.controlador = cs;
+        this.controladorCategoria= controladorCategoria;
         this.productoOriginal = producto;
         this.onGuardarExitoso = onGuardar;
 
@@ -273,14 +276,14 @@ public class DialogoEditarProducto extends JDialog {
 
     private void cargarCategorias() {
         cmbCatMadre.removeAllItems();
-        for (Categoria c : controlador.obtenerCategoriasMadre()) cmbCatMadre.addItem(c);
+        for (Categoria c : controladorCategoria.obtenerCategoriasMadre()) cmbCatMadre.addItem(c);
     }
     
     private void cargarSubCategorias(Categoria madre) {
         cmbSubCat.removeAllItems();
         if (madre != null) {
             cmbSubCat.setEnabled(true);
-            List<Categoria> hijas = controlador.obtenerCategoriasMadre();
+            List<Categoria> hijas = controladorCategoria.obtenerCategoriasMadre();
             for (Categoria h : hijas) cmbSubCat.addItem(h);
         } else {
             cmbSubCat.setEnabled(false);

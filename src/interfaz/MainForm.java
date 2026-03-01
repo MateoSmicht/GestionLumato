@@ -166,7 +166,7 @@ public class MainForm extends JFrame {
     private void abrirPanelAltaStock() {
         panelCuerpo.removeAll();
 
-        PanelAltaStock panelAlta = new PanelAltaStock(empresa, () -> abrirSubmenuStock(), this.controlador);
+        PanelAltaStock panelAlta = new PanelAltaStock(empresa, () -> abrirSubmenuStock(), this.controlador,this.controladorCat);
         // panelAlta debería adaptarse también si usa layouts correctos, si no, se verá arriba a la izq.
         // Asumiremos que PanelAltaStock maneja su layout o usaremos un wrapper si es necesario.
         panelCuerpo.add(panelAlta, BorderLayout.CENTER);
@@ -179,6 +179,7 @@ public class MainForm extends JFrame {
 
         PanelFormularioProducto formulario = new PanelFormularioProducto(
             controlador,
+            controladorCat,
             codigo, 
             () -> abrirPanelVenta(), 
             () -> abrirPanelVenta()  
@@ -206,7 +207,7 @@ public class MainForm extends JFrame {
     private void abrirPanelCargaStock() {
         panelCuerpo.removeAll();
 
-        PanelCargaStock panelCarga = new PanelCargaStock(empresa, controlador);
+        PanelCargaStock panelCarga = new PanelCargaStock(empresa, controlador,this.controladorCat);
         panelCarga.btnVolver.addActionListener(e -> abrirSubmenuStock());
         
         panelCuerpo.add(panelCarga, BorderLayout.CENTER);

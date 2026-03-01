@@ -1,7 +1,7 @@
 package persistencia;
 
 
-import com.google.gson.*; // Importar todo Gson
+import com.google.gson.*; 
 import com.google.gson.reflect.TypeToken;
 import modelo.Venta;
 

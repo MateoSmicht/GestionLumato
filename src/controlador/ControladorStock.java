@@ -94,13 +94,7 @@ public class ControladorStock {
         }
     }
 
-    /**
-     * Devuelve las categorías para llenar el combo.
-     * Así la vista no toca la variable "empresa" directamente.
-     */
-    public List<Categoria> obtenerCategoriasMadre() {
-        return empresa.getCategoriasMadre();
-    }
+   
     
     public Producto buscarProducto(String codigo) {
     	return repositorio.buscarPorCodigo(codigo);

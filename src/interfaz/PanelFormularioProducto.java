@@ -7,6 +7,7 @@ import java.util.List;
 
 import modelo.Categoria;
 import modelo.Empresa;
+import controlador.ControladorCategoria;
 import controlador.ControladorStock;
 
 public class PanelFormularioProducto extends JPanel {
@@ -14,6 +15,7 @@ public class PanelFormularioProducto extends JPanel {
     private static final long serialVersionUID = 1L;
     
     private ControladorStock controlador;
+    private ControladorCategoria controladorCategoria;
     
     // Componentes
     private JComboBox<Object> cmbCatMadre; 
@@ -33,8 +35,9 @@ public class PanelFormularioProducto extends JPanel {
     private Runnable onCancelar;
  
 
-    public PanelFormularioProducto(ControladorStock cs, String codigoPredefinido, Runnable onGuardar, Runnable onCancelar) {
+    public PanelFormularioProducto(ControladorStock cs,ControladorCategoria controladorCategoria, String codigoPredefinido, Runnable onGuardar, Runnable onCancelar) {
         this.controlador = cs;
+        this.controladorCategoria= controladorCategoria;
         this.onGuardarExitoso = onGuardar;
         this.onCancelar = onCancelar;
 
@@ -249,7 +252,7 @@ public class PanelFormularioProducto extends JPanel {
                 cmbSubCat.setEnabled(true);
                 
                 int idMadre = ((Categoria)sel).getId();
-                List<Categoria> hijas = controlador.obtenerSubCategorias(idMadre);
+                List<Categoria> hijas = controladorCategoria.obtenerSubCategorias(idMadre);
                 
                 for (Categoria h : hijas) {
                     cmbSubCat.addItem(h);
@@ -262,7 +265,7 @@ public class PanelFormularioProducto extends JPanel {
 
     private void cargarCategoriasMadre() {
         cmbCatMadre.removeAllItems();
-        for (Categoria c : controlador.obtenerCategoriasMadre()) cmbCatMadre.addItem(c);
+        for (Categoria c : controladorCategoria.obtenerCategoriasMadre()) cmbCatMadre.addItem(c);
     }
 
     // Helpers UI

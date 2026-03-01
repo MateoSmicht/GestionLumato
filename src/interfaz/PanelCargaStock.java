@@ -17,6 +17,7 @@ import modelo.Empresa;
 import modelo.Producto;
 import modelo.DetalleCarga;
 import controlador.ControladorCargaStock;
+import controlador.ControladorCategoria;
 import controlador.ControladorStock;
 import interfaz.dialogos.DialogoAltaProducto;
 import interfaz.dialogos.DialogoModificarPrecio;
@@ -27,6 +28,7 @@ public class PanelCargaStock extends JPanel {
 
     private ControladorCargaStock controlador;
     private ControladorStock controladorStock;
+    private ControladorCategoria controladorCategoria;
     private boolean modoBulto = false;
 
     // Componentes Visuales
@@ -47,9 +49,10 @@ public class PanelCargaStock extends JPanel {
     private final Color COLOR_ROJO = new Color(231, 76, 60);
     private final Color COLOR_NARANJA = new Color(230, 126, 34);
 
-    public PanelCargaStock(Empresa empresa, ControladorStock cs) {
+    public PanelCargaStock(Empresa empresa, ControladorStock cs, ControladorCategoria controladorCategoria) {
         this.controlador = new ControladorCargaStock(empresa, cs);
         this.controladorStock= cs;
+        this.controladorCategoria= controladorCategoria;
        
         setLayout(null);
         setBackground(COLOR_FONDO);
@@ -571,7 +574,7 @@ public class PanelCargaStock extends JPanel {
     }
     private void abrirDialogoAltaRapida(String codigo) {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, codigo, this.controladorStock);
+        DialogoAltaProducto dialog = new DialogoAltaProducto(parent, codigo, this.controladorStock, this.controladorCategoria);
         dialog.setVisible(true);
         
         if (dialog.isGuardadoExitoso()) {

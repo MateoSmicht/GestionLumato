@@ -2,9 +2,9 @@ package interfaz.dialogos;
 
 import javax.swing.*;
 
+import controlador.ControladorCategoria;
 import controlador.ControladorStock;
 import interfaz.PanelFormularioProducto;
-import modelo.Empresa;
 
 public class DialogoAltaProducto extends JDialog {
 
@@ -12,14 +12,15 @@ public class DialogoAltaProducto extends JDialog {
     private PanelFormularioProducto panelFormulario;
     private boolean guardado = false;
 
-    public DialogoAltaProducto(JFrame parent, String codigo, ControladorStock cs) {
+    public DialogoAltaProducto(JFrame parent, String codigo, ControladorStock cs, ControladorCategoria controladorCat) {
         super(parent, "Nuevo Producto", true);
         setSize(800, 580);
         setLocationRelativeTo(parent);
         
         // INSTANCIAMOS EL PANEL MAESTRO
         panelFormulario = new PanelFormularioProducto(
-            cs, 
+            cs,
+            controladorCat,
             codigo, 
             () -> { // Acción al guardar
                 this.guardado = true;

@@ -109,7 +109,7 @@ public class PanelGestionStock extends JPanel {
             String cod = JOptionPane.showInputDialog(this, "Código a editar:");
             if(cod != null && !cod.isEmpty()) {
                 Producto p = cStock.buscarProducto(cod);
-                if(p!=null) new DialogoEditarProducto((JFrame)SwingUtilities.getWindowAncestor(this),cStock, p, null).setVisible(true);
+                if(p!=null) new DialogoEditarProducto((JFrame)SwingUtilities.getWindowAncestor(this),cStock,controladorCat, p, null).setVisible(true);
                 else JOptionPane.showMessageDialog(this, "No encontrado");
             }
         });
